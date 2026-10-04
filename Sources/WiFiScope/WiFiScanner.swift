@@ -1,3 +1,4 @@
+import Combine
 import CoreWLAN
 import Foundation
 
@@ -44,8 +45,17 @@ final class WiFiScanner: ObservableObject {
                     // ssid=nil 表示扫描全部；includeHidden 带上隐藏网络
                     let found = try iface.scanForNetworks(withSSID: nil, includeHidden: true)
                     let current = iface.bssid()
-                    let list = found.enumerated().map {
-                        WiFiNetwork(network: $0.element, currentBSSID: current, fallbackIndex: $0.offset)
+                    // 扫描结果是无序 Set；先排序再给同名同信道的网络编号，没有 BSSID 时 id 才不会每轮乱跳
+                    let sorted = found.sorted {
+                        ($0.ssid ?? "", $0.wlanChannel?.channelNumber ?? 0, -$0.rssiValue)
+                            < ($1.ssid ?? "", $1.wlanChannel?.channelNumber ?? 0, -$1.rssiValue)
+                    }
+                    var seen: [String: Int] = [:]
+                    let list = sorted.map { net -> WiFiNetwork in
+                        let key = "\(net.ssid ?? "")#\(net.wlanChannel?.channelNumber ?? 0)"
+                        let idx = seen[key, default: 0]
+                        seen[key] = idx + 1
+                        return WiFiNetwork(network: net, currentBSSID: current, fallbackIndex: idx)
                     }
                     return .success(list)
                 } catch {

@@ -78,7 +78,7 @@ struct ContentView: View {
                     if n.isCurrent {
                         Image(systemName: "checkmark.circle.fill").foregroundStyle(.green)
                     }
-                    Text(n.displaySSID).foregroundStyle(n.ssid.isEmpty ? .secondary : .primary)
+                    Text(n.displaySSID).foregroundStyle(n.ssid.isEmpty ? Color.secondary : Color.primary)
                 }
             }
             .width(min: 140, ideal: 180)

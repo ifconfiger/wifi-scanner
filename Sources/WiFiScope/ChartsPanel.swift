@@ -125,8 +125,9 @@ struct SpectrumChart: View {
                     .lineStyle(StrokeStyle(lineWidth: selection.contains(n.id) ? 3 : 1.4))
                     .opacity(dimmed ? 0.2 : 1)
                 }
-                PointMark(x: .value("信道", n.centerChannel), y: .value("dBm", n.rssi))
-                    .opacity(0)
+                // 只用来挂 SSID 标注：点本身不画（用 symbolSize(0)，避免 opacity 把标注也隐藏）
+                PointMark(x: .value("信道", n.centerChannel), y: .value("dBm", Double(n.rssi)))
+                    .symbolSize(0)
                     .annotation(position: .top, spacing: 1) {
                         Text(n.displaySSID)
                             .font(.system(size: 9, weight: selection.contains(n.id) ? .bold : .regular))

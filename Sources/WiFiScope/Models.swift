@@ -93,8 +93,9 @@ struct WiFiNetwork: Identifiable, Hashable {
 
     init(network n: CWNetwork, currentBSSID: String?, fallbackIndex: Int) {
         let ch = n.wlanChannel
+        let b = n.bssid ?? ""
         ssid = n.ssid ?? ""
-        bssid = n.bssid ?? ""
+        bssid = b
         rssi = n.rssiValue
         noise = n.noiseMeasurement
         channel = ch?.channelNumber ?? 0
@@ -108,9 +109,10 @@ struct WiFiNetwork: Identifiable, Hashable {
         phyMode = ie.phyMode
         stationCount = ie.stationCount
         channelUtilization = ie.channelUtilization
-        isCurrent = !bssid.isEmpty && bssid == currentBSSID
-        // 无定位权限时 BSSID 为空，只能拼一个临时 id
-        id = bssid.isEmpty ? "\(ssid)#\(channel)#\(fallbackIndex)" : bssid
+        // 用局部变量：&& 右侧是 autoclosure，初始化完成前不能捕获 self
+        isCurrent = !b.isEmpty && b == currentBSSID
+        // 无定位权限时 BSSID 为空，用 SSID+信道+同名序号 拼一个尽量稳定的 id
+        id = b.isEmpty ? "\(n.ssid ?? "")#\(ch?.channelNumber ?? 0)#\(fallbackIndex)" : b
     }
 
     /// CWChannelWidth 原始值：1=20 / 2=40 / 3=80 / 4=160

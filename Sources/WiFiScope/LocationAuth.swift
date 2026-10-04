@@ -1,15 +1,18 @@
 import AppKit
+import Combine
 import CoreLocation
 
 /// macOS 14 起，没有定位授权时 CoreWLAN 的 ssid/bssid 一律返回 nil。
 final class LocationAuth: NSObject, ObservableObject, CLLocationManagerDelegate {
     @Published private(set) var status: CLAuthorizationStatus
-    private let manager = CLLocationManager()
+    private let manager: CLLocationManager
 
     override init() {
-        status = manager.authorizationStatus
+        let m = CLLocationManager()
+        manager = m
+        status = m.authorizationStatus
         super.init()
-        manager.delegate = self
+        m.delegate = self
     }
 
     var isAuthorized: Bool {
