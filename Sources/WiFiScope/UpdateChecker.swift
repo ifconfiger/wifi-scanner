@@ -12,6 +12,7 @@ final class UpdateChecker: ObservableObject {
     private static let lastCheckKey = "lastUpdateCheck"
 
     @Published private(set) var isChecking = false
+    @Published private(set) var isDownloading = false
     @Published var autoCheck: Bool {
         didSet { UserDefaults.standard.set(autoCheck, forKey: Self.autoCheckKey) }
     }
@@ -82,9 +83,8 @@ final class UpdateChecker: ObservableObject {
             tagName.replacingOccurrences(of: "main-v", with: "").trimmingCharacters(in: CharacterSet(charactersIn: "v"))
         }
 
-        var zipURL: URL? {
-            assets.first { $0.name.hasSuffix(".zip") }?.browserDownloadURL
-        }
+        var dmg: Asset? { assets.first { $0.name.hasSuffix(".dmg") } }
+        var zip: Asset? { assets.first { $0.name.hasSuffix(".zip") } }
     }
 
     private static func fetchLatest() async throws -> Release {
@@ -128,11 +128,49 @@ final class UpdateChecker: ObservableObject {
         a.addButton(withTitle: String(localized: "Later"))
         switch a.runModal() {
         case .alertFirstButtonReturn:
-            NSWorkspace.shared.open(release.zipURL ?? release.htmlURL)
+            if let dmg = release.dmg {
+                Task { await install(dmg, release: release) }
+            } else {
+                // Releases before the DMG existed only ship a zip; let the browser handle it
+                NSWorkspace.shared.open(release.zip?.browserDownloadURL ?? release.htmlURL)
+            }
         case .alertSecondButtonReturn:
             NSWorkspace.shared.open(release.htmlURL)
         default:
             break
+        }
+    }
+
+    // MARK: - Install
+
+    /// Download the DMG to ~/Downloads, mount it in Finder and offer to quit so the app can be replaced
+    private func install(_ dmg: Release.Asset, release: Release) async {
+        guard !isDownloading else { return }
+        isDownloading = true
+        defer { isDownloading = false }
+        let file: URL
+        do {
+            let (tmp, resp) = try await URLSession.shared.download(from: dmg.browserDownloadURL)
+            guard (resp as? HTTPURLResponse)?.statusCode == 200 else { throw URLError(.badServerResponse) }
+            let downloads = try FileManager.default.url(for: .downloadsDirectory, in: .userDomainMask,
+                                                        appropriateFor: nil, create: true)
+            file = downloads.appendingPathComponent(dmg.name)
+            try? FileManager.default.removeItem(at: file)
+            try FileManager.default.moveItem(at: tmp, to: file)
+        } catch {
+            // Fall back to the browser so the user can still get the update
+            NSWorkspace.shared.open(dmg.browserDownloadURL)
+            return
+        }
+        NSWorkspace.shared.open(file)
+
+        let a = NSAlert()
+        a.messageText = String(localized: "Install WiFiScope \(release.version)")
+        a.informativeText = String(localized: "The disk image is open in Finder (saved to Downloads). Quit WiFiScope, then drag the new WiFiScope onto Applications and choose Replace.")
+        a.addButton(withTitle: String(localized: "Quit WiFiScope"))
+        a.addButton(withTitle: String(localized: "Later"))
+        if a.runModal() == .alertFirstButtonReturn {
+            NSApp.terminate(nil)
         }
     }
 

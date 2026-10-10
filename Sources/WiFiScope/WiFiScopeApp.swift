@@ -21,7 +21,7 @@ struct WiFiScopeApp: App {
                 Button("Check for Updates…") {
                     Task { await updater.check(userInitiated: true) }
                 }
-                .disabled(updater.isChecking)
+                .disabled(updater.isChecking || updater.isDownloading)
                 Toggle("Automatically Check for Updates", isOn: $updater.autoCheck)
                 Divider()
                 Picker("Language", selection: $language) {

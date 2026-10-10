@@ -241,7 +241,7 @@ final class LogoStore {
     }
 }
 
-/// Small logo for the table/detail; shows a monogram when no image is available and the vendor name on hover
+/// Small logo for the table/detail; shows a monogram when no image is available, nothing for unknown vendors and the vendor name on hover
 struct VendorLogo: View {
     let vendor: Vendor?
     var size: CGFloat = 16
@@ -273,11 +273,8 @@ struct VendorLogo: View {
                     image = await LogoStore.shared.load(d)
                 }
             } else {
-                Image(systemName: "questionmark.square.dashed")
-                    .resizable()
-                    .frame(width: size, height: size)
-                    .foregroundStyle(.tertiary)
-                    .help("Unknown vendor (unregistered OUI or randomized BSSID)")
+                // Unknown vendor: keep an empty slot so SSIDs stay aligned in the table
+                Color.clear.frame(width: size, height: size)
             }
         }
     }

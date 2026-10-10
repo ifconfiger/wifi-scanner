@@ -5,7 +5,7 @@ English | [简体中文](README.zh-CN.md)
 A native macOS Wi-Fi scanner in the spirit of WiFi Explorer. It lists nearby 2.4 / 5 / 6 GHz networks without dropping your current connection, and charts channels, signal strength and network names.
 
 ## Install
-Download the latest `WiFiScope-x.y.z-macos-arm64.zip` from [Releases](https://github.com/ifconfiger/wifi-scanner/releases), unzip it and move `WiFiScope.app` to `/Applications`. Release builds are signed with a Developer ID and notarized by Apple. Apple Silicon only, macOS 13+.
+Download the latest `WiFiScope-x.y.z-macos-arm64.dmg` from [Releases](https://github.com/ifconfiger/wifi-scanner/releases), open it and drag WiFiScope onto Applications. The app and the disk image are signed with a Developer ID and notarized by Apple. A `.zip` of the app is attached as well. Apple Silicon only, macOS 13+.
 
 On first launch macOS asks for **location permission**. Allow it, otherwise SSIDs and BSSIDs stay hidden.
 
@@ -48,7 +48,7 @@ On first launch macOS asks for **location permission**. Allow it, otherwise SSID
 The UI is available in English (default) and Simplified Chinese. Switch it from **WiFiScope → Language** (English / 简体中文 / Follow System); the app offers to restart to apply it.
 
 ### Updates
-WiFiScope checks GitHub Releases at launch (at most once a day) and offers to download a newer version. Use **WiFiScope → Check for Updates…** to check manually, or turn off **Automatically Check for Updates** in the same menu.
+WiFiScope checks GitHub Releases at launch (at most once a day) and offers a newer version. **Download** saves the DMG to `~/Downloads` and opens it in Finder; quit WiFiScope, drag the new copy onto Applications and choose Replace. Use **WiFiScope → Check for Updates…** to check manually, or turn off **Automatically Check for Updates** in the same menu.
 
 ## Building (macOS 13+, Xcode)
 ```bash
@@ -72,8 +72,13 @@ It compiles with `-emit-localized-strings` and lists any key missing a Chinese t
 uv run tools/make_icon.py
 ```
 
+To package a disk image locally after `./build.sh`:
+```bash
+tools/make_dmg.sh            # → build/WiFiScope.dmg
+```
+
 ### Releasing
-Push a tag of the form `main-vX.Y.Z`. `.github/workflows/release.yml` builds an arm64 app with that version, signs it with Developer ID, notarizes and staples it, and publishes a GitHub Release with the zip and its SHA-256. Without the `APPLE_SIGN_*` / `APPLE_NOTARY_*` secrets (e.g. in a fork) it falls back to ad-hoc signing.
+Push a tag of the form `main-vX.Y.Z`. `.github/workflows/release.yml` builds an arm64 app with that version, signs it with Developer ID, notarizes and staples it, packs it into a DMG (`tools/make_dmg.sh`), signs, notarizes and staples the DMG (`tools/notarize.sh`), and publishes a GitHub Release with the DMG, a zip of the app and `SHA256SUMS.txt`. The update checker looks for the `.dmg` asset, so keep that naming. Without the `APPLE_SIGN_*` / `APPLE_NOTARY_*` secrets (e.g. in a fork) it falls back to ad-hoc signing.
 
 ## How it works
 - Scanning uses CoreWLAN's `CWInterface.scanForNetworks(withSSID:includeHidden:)`. It blocks for about 3–5 seconds and returns everything at once; there is no public per-network callback. So the app first shows the system scan cache, `cachedScanResults()`, which is nearly instant. While a scan runs it polls that cache and inserts new networks early, then reconciles with the full result.

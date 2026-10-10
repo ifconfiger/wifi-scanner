@@ -5,7 +5,7 @@
 类 WiFi Explorer 的 macOS 原生 Wi-Fi 扫描器：不断开当前连接，列出 2.4 / 5 / 6 GHz 周边网络，用图表展示信道、信号强度和网络名称。
 
 ## 安装
-从 [Releases](https://github.com/ifconfiger/wifi-scanner/releases) 下载最新的 `WiFiScope-x.y.z-macos-arm64.zip`，解压后把 `WiFiScope.app` 拖进「应用程序」。发布版已用 Developer ID 签名并通过 Apple 公证。仅支持 Apple Silicon，macOS 13+。
+从 [Releases](https://github.com/ifconfiger/wifi-scanner/releases) 下载最新的 `WiFiScope-x.y.z-macos-arm64.dmg`，打开后把 WiFiScope 拖到「应用程序」。App 和 DMG 均已用 Developer ID 签名并通过 Apple 公证；同时也附带 App 的 `.zip`。仅支持 Apple Silicon，macOS 13+。
 
 首次启动会弹出**定位权限**请求，必须允许，否则看不到 SSID/BSSID。
 
@@ -48,7 +48,7 @@
 界面支持英文（默认）和简体中文。在菜单 **WiFiScope → Language / 语言** 中切换（English / 简体中文 / 跟随系统），切换后按提示重启生效。
 
 ### 检查更新
-启动时自动检查 GitHub Releases（每天最多一次），有新版本时弹窗提供下载。也可以通过 **WiFiScope → 检查更新…** 手动检查，或在同一菜单关闭「自动检查更新」。
+启动时自动检查 GitHub Releases（每天最多一次），有新版本时弹窗提示。点「下载」会把 DMG 存到「下载」文件夹并在访达中打开；退出 WiFiScope，把新版拖到「应用程序」并选择「替换」即可。也可以通过 **WiFiScope → 检查更新…** 手动检查，或在同一菜单关闭「自动检查更新」。
 
 ## 构建（需要 macOS 13+ 和 Xcode）
 ```bash
@@ -72,8 +72,13 @@ uv run tools/check_l10n.py
 uv run tools/make_icon.py
 ```
 
+在 `./build.sh` 之后本地打 DMG：
+```bash
+tools/make_dmg.sh            # → build/WiFiScope.dmg
+```
+
 ### 发版
-推送形如 `main-vX.Y.Z` 的 tag，`.github/workflows/release.yml` 会以该版本号构建 arm64 应用，用 Developer ID 签名、公证并钉入票据，然后发布带 zip 和 SHA-256 的 GitHub Release。缺少 `APPLE_SIGN_*` / `APPLE_NOTARY_*` secrets 时（如 fork 仓库）退回 ad-hoc 签名。
+推送形如 `main-vX.Y.Z` 的 tag，`.github/workflows/release.yml` 会以该版本号构建 arm64 应用，用 Developer ID 签名、公证并钉入票据，再打成 DMG（`tools/make_dmg.sh`）并对 DMG 签名、公证、钉票（`tools/notarize.sh`），最后发布带 DMG、App zip 和 `SHA256SUMS.txt` 的 GitHub Release。检查更新依赖 `.dmg` 资源，命名请保持一致。缺少 `APPLE_SIGN_*` / `APPLE_NOTARY_*` secrets 时（如 fork 仓库）退回 ad-hoc 签名。
 
 ## 原理
 - 扫描用 `CoreWLAN` 的 `CWInterface.scanForNetworks(withSSID:includeHidden:)`，这是阻塞调用（约 3~5 秒），一次性返回全部结果，没有逐个回调的公开 API。所以启动时先显示系统扫描缓存 `cachedScanResults()`（几乎瞬间），扫描期间轮询缓存把新出现的网络先插进列表，扫完再用完整结果校正。

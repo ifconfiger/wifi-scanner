@@ -164,6 +164,9 @@
 "You have version %@." = "当前版本为 %@。";
 "Download" = "下载";
 "View Release" = "查看发布页";
+"Install WiFiScope %@" = "安装 WiFiScope %@";
+"The disk image is open in Finder (saved to Downloads). Quit WiFiScope, then drag the new WiFiScope onto Applications and choose Replace." = "磁盘映像已在访达中打开（已保存到「下载」）。请退出 WiFiScope，再把新的 WiFiScope 拖到「应用程序」并选择「替换」。";
+"Quit WiFiScope" = "退出 WiFiScope";
 "OUI %@ (virtual BSSID, guessed)" = "OUI %@（虚拟 BSSID，推测）";
 "Unknown vendor (unregistered OUI or randomized BSSID)" = "未知厂商（OUI 未登记或 BSSID 为随机地址）";
 "Wi-Fi is off. Turn on Wi-Fi first." = "Wi-Fi 已关闭，请先打开 Wi-Fi";

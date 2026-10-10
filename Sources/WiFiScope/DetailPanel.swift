@@ -131,7 +131,7 @@ struct DetailPanel: View {
                     .lineLimit(2)
                     .textSelection(.enabled)
                 HStack(spacing: 6) {
-                    if !n.bssid.isEmpty {
+                    if !n.bssid.isEmpty, n.vendor != nil {
                         VendorLogo(vendor: n.vendor, size: 18)
                     }
                     BandBadge(band: n.band)

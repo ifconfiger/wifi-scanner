@@ -80,56 +80,48 @@ jobs:
           lipo -archs build/WiFiScope.app/Contents/MacOS/WiFiScope
           codesign -dv --entitlements - build/WiFiScope.app 2>&1
 
-      - name: Notarize
+      # Notarize and staple the app first so the copy inside the DMG carries its own ticket
+      - name: Notarize app
         if: env.NOTARIZE == '1'
         run: |
-          KEY="$RUNNER_TEMP/AuthKey.p8"
-          # Accept either the raw .p8 contents or its base64
-          if [[ "$APPLE_NOTARY_KEY" == *"BEGIN PRIVATE KEY"* ]]; then
-            printf '%s\n' "$APPLE_NOTARY_KEY" > "$KEY"
-          else
-            echo "$APPLE_NOTARY_KEY" | base64 --decode > "$KEY"
-          fi
-          AUTH=(--key "$KEY" --key-id "$APPLE_NOTARY_KEY_ID" --issuer "$APPLE_NOTARY_ISSUER")
-
           SUBMIT_ZIP="$RUNNER_TEMP/notarize.zip"
           ditto -c -k --keepParent build/WiFiScope.app "$SUBMIT_ZIP"
-          RESULT="$(xcrun notarytool submit "$SUBMIT_ZIP" "${AUTH[@]}" \
-            --wait --timeout 30m --output-format json)"
-          echo "$RESULT"
-          ID="$(echo "$RESULT" | jq -r .id)"
-          STATUS="$(echo "$RESULT" | jq -r .status)"
-          # Always print the log for troubleshooting (Accepted submissions may still carry warnings)
-          xcrun notarytool log "$ID" "${AUTH[@]}" || true
-          rm -f "$KEY"
-          if [[ "$STATUS" != "Accepted" ]]; then
-            echo "Notarization failed: $STATUS" >&2
-            exit 1
-          fi
-
-          # Staple the ticket so Gatekeeper passes even offline
-          xcrun stapler staple build/WiFiScope.app
-          xcrun stapler validate build/WiFiScope.app
+          tools/notarize.sh "$SUBMIT_ZIP" build/WiFiScope.app
           spctl --assess --type execute -vv build/WiFiScope.app
+
+      - name: Build DMG
+        run: |
+          DMG="WiFiScope-${VERSION}-macos-arm64.dmg"
+          tools/make_dmg.sh "build/$DMG"
+          echo "DMG=$DMG" >> "$GITHUB_ENV"
+
+      - name: Notarize DMG
+        if: env.NOTARIZE == '1'
+        run: |
+          tools/notarize.sh "build/$DMG" "build/$DMG"
+          spctl --assess --type open --context context:primary-signature -vv "build/$DMG"
 
       - name: Package
         run: |
+          # The zip stays alongside the DMG for clients that still download it (≤ 0.2.0's update checker)
           ZIP="WiFiScope-${VERSION}-macos-arm64.zip"
-          ditto -c -k --keepParent build/WiFiScope.app "$ZIP"
-          shasum -a 256 "$ZIP" > "$ZIP.sha256"
+          ditto -c -k --keepParent build/WiFiScope.app "build/$ZIP"
+          cd build
+          shasum -a 256 "$DMG" "$ZIP" > SHA256SUMS.txt
+          cat SHA256SUMS.txt
           echo "ZIP=$ZIP" >> "$GITHUB_ENV"
 
       - name: Create release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          NOTES="Apple Silicon (arm64) only, macOS 13+."
+          NOTES="Download \`$DMG\`, open it and drag WiFiScope to Applications. Apple Silicon (arm64) only, macOS 13+."
           if [[ "${NOTARIZE:-}" == "1" ]]; then
-            NOTES+=" Signed with Developer ID and notarized by Apple; unzip and open."
+            NOTES+=" Signed with Developer ID and notarized by Apple."
           else
             NOTES+=" Not notarized; before the first launch run: \`xattr -dr com.apple.quarantine /Applications/WiFiScope.app\`"
           fi
-          gh release create "$GITHUB_REF_NAME" "$ZIP" "$ZIP.sha256" \
+          gh release create "$GITHUB_REF_NAME" "build/$DMG" "build/$ZIP" build/SHA256SUMS.txt \
             --title "WiFiScope ${VERSION}" \
             --generate-notes \
             --notes "$NOTES"
