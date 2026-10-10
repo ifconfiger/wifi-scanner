@@ -77,7 +77,7 @@ jobs:
         run: |
           swift --version
           ./build.sh
-          lipo -archs build/WiFi-Scanner.app/Contents/MacOS/WiFi-Scanner
+          lipo -archs build/WiFi-Scanner.app/Contents/MacOS/WiFiScanner
           codesign -dv --entitlements - build/WiFi-Scanner.app 2>&1
 
       # Notarize and staple the app first so the copy inside the DMG carries its own ticket

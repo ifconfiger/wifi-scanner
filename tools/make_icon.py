@@ -71,11 +71,13 @@ def main():
         ImageDraw.Draw(fill).polygon(pts, fill=color + (95,))
         layer.alpha_composite(fill)
         glow = Image.new("RGBA", (S, S), (0, 0, 0, 0))
-        ImageDraw.Draw(glow).line(pts, fill=color + (200,), width=48, joint="curve")
-        layer.alpha_composite(glow.filter(ImageFilter.GaussianBlur(22)))
-        ImageDraw.Draw(layer).line(pts, fill=color + (255,), width=24, joint="curve")
+        ImageDraw.Draw(glow).line(pts, fill=color + (200,), width=68, joint="curve")
+        layer.alpha_composite(glow.filter(ImageFilter.GaussianBlur(26)))
+        ImageDraw.Draw(layer).line(pts, fill=color + (255,), width=36, joint="curve")
 
-    ImageDraw.Draw(layer).line((left, base_y, right, base_y), fill=(170, 195, 245, 200), width=12)
+    # Thick strokes overshoot the baseline at their ends; trim everything below it
+    ImageDraw.Draw(layer).rectangle((0, base_y + 8, S, S), fill=(0, 0, 0, 0))
+    ImageDraw.Draw(layer).line((left, base_y, right, base_y), fill=(170, 195, 245, 200), width=16)
 
     clipped = Image.new("RGBA", (S, S), (0, 0, 0, 0))
     clipped.paste(layer, (0, 0), Image.composite(layer.getchannel("A"), Image.new("L", (S, S), 0), mask))
