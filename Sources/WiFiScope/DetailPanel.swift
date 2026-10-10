@@ -40,6 +40,7 @@ struct DetailPanel: View {
             section("基本信息", [
                 ("SSID", n.displaySSID),
                 ("BSSID", n.bssid.isEmpty ? "—（需定位权限）" : n.bssid),
+                ("厂商", n.vendor.map { "\($0.brand)\($0.isGuess ? "（推测）" : "")" } ?? (n.bssid.isEmpty ? "—" : "未知")),
                 ("安全", n.security),
                 ("协议", n.phyMode.isEmpty ? "—" : n.phyMode),
                 ("国家/地区", n.countryCode.isEmpty ? "—" : n.countryCode),
@@ -58,8 +59,8 @@ struct DetailPanel: View {
 
             section("信号", [
                 ("信号强度", "\(n.rssi) dBm（\(n.quality)）"),
-                ("噪声", "\(n.noise) dBm"),
-                ("信噪比", "\(n.snr) dB"),
+                ("噪声", n.hasNoise ? "\(n.noise) dBm" : "—（仅当前连接可测）"),
+                ("信噪比", n.snr.map { "\($0) dB" } ?? "—"),
                 ("最近 5 分钟", rssis.isEmpty ? "—" :
                     "最低 \(rssis.min()!) / 平均 \(rssis.reduce(0, +) / rssis.count) / 最高 \(rssis.max()!) dBm"),
                 ("首次发现", firstSeen.map { $0.formatted(date: .omitted, time: .standard) } ?? "—"),
@@ -120,6 +121,9 @@ struct DetailPanel: View {
                     .lineLimit(2)
                     .textSelection(.enabled)
                 HStack(spacing: 6) {
+                    if !n.bssid.isEmpty {
+                        VendorLogo(vendor: n.vendor, size: 18)
+                    }
                     BandBadge(band: n.band)
                     Text("信道 \(n.channel)").font(.caption).foregroundStyle(.secondary)
                     if n.isCurrent {
@@ -149,9 +153,13 @@ struct DetailPanel: View {
             Grid(alignment: .leading, horizontalSpacing: 12, verticalSpacing: 6) {
                 ForEach(rows.indices, id: \.self) { i in
                     GridRow {
-                        Text(rows[i].0)
-                            .foregroundStyle(.secondary)
-                            .gridColumnAlignment(.trailing)
+                        HStack(spacing: 3) {
+                            Text(rows[i].0).foregroundStyle(.secondary)
+                            if let tip = InfoTips.all[rows[i].0] {
+                                InfoTipButton(title: rows[i].0, tip: tip)
+                            }
+                        }
+                        .gridColumnAlignment(.trailing)
                         Text(rows[i].1)
                             .textSelection(.enabled)
                             .fixedSize(horizontal: false, vertical: true)

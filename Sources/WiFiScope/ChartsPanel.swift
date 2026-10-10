@@ -112,26 +112,46 @@ struct SpectrumChart: View {
     let onSelect: (String?) -> Void
 
     var body: some View {
+        // 同名同色；没有 SSID 的（隐藏/无权限）各自按 id 取色，否则全挤成一个颜色
+        let colorKey = { (n: WiFiNetwork) in n.ssid.isEmpty ? n.id : n.ssid }
+        let colors = Palette.assign(networks.map(colorKey))
         Chart {
             ForEach(networks) { n in
-                let dimmed = !selection.isEmpty && !selection.contains(n.id)
+                let selected = selection.contains(n.id)
+                let dimmed = !selection.isEmpty && !selected
+                let color = colors[colorKey(n)] ?? .accentColor
                 ForEach(Array(n.spectrumShape().enumerated()), id: \.offset) { _, p in
+                    // 半透明渐变填充 + 实线描边；用显式颜色而不是 foregroundStyle(by:)，默认配色偏灰
+                    AreaMark(
+                        x: .value("信道", p.x),
+                        yStart: .value("底", -100.0),
+                        yEnd: .value("dBm", p.y),
+                        series: .value("BSSID", n.id)
+                    )
+                    .foregroundStyle(
+                        LinearGradient(
+                            colors: [color.opacity(selected ? 0.45 : 0.16), color.opacity(0.02)],
+                            startPoint: .top, endPoint: .bottom
+                        )
+                    )
+                    .opacity(dimmed ? 0.15 : 1)
                     LineMark(
                         x: .value("信道", p.x),
                         y: .value("dBm", p.y),
                         series: .value("BSSID", n.id)
                     )
-                    .foregroundStyle(by: .value("SSID", n.displaySSID))
-                    .lineStyle(StrokeStyle(lineWidth: selection.contains(n.id) ? 3 : 1.4))
-                    .opacity(dimmed ? 0.2 : 1)
+                    // 网络多时曲线挤在一起，描边也带点透明度，选中的才用实色
+                    .foregroundStyle(color.opacity(selected ? 1 : 0.7))
+                    .lineStyle(StrokeStyle(lineWidth: selected ? 3 : 1.6, lineJoin: .round))
+                    .opacity(dimmed ? 0.25 : 1)
                 }
                 // 只用来挂 SSID 标注：点本身不画（用 symbolSize(0)，避免 opacity 把标注也隐藏）
                 PointMark(x: .value("信道", n.centerChannel), y: .value("dBm", Double(n.rssi)))
                     .symbolSize(0)
                     .annotation(position: .top, spacing: 1) {
                         Text(n.displaySSID)
-                            .font(.system(size: 9, weight: selection.contains(n.id) ? .bold : .regular))
-                            .foregroundStyle(.secondary)
+                            .font(.system(size: 9, weight: selected ? .bold : .medium))
+                            .foregroundStyle(color)
                             .opacity(dimmed ? 0.3 : 1)
                     }
             }

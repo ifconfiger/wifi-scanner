@@ -86,10 +86,16 @@ struct WiFiNetwork: Identifiable, Hashable {
     let stationCount: Int?
     let channelUtilization: Double?
     let isCurrent: Bool
+    let vendor: Vendor?
 
-    var snr: Int { rssi - noise }
+    /// CoreWLAN 只测当前连接网络的噪声，其他网络给 0
+    var hasNoise: Bool { noise != 0 }
+    var snr: Int? { hasNoise ? rssi - noise : nil }
+    /// 表格排序用：没有噪声数据的排在最后
+    var snrSortKey: Int { snr ?? Int.min }
     var bandLabel: String { band.rawValue }
     var displaySSID: String { ssid.isEmpty ? "(隐藏/无权限)" : ssid }
+    var vendorName: String { vendor?.brand ?? "" }
 
     init(network n: CWNetwork, currentBSSID: String?, fallbackIndex: Int) {
         let ch = n.wlanChannel
@@ -105,6 +111,7 @@ struct WiFiNetwork: Identifiable, Hashable {
         countryCode = n.countryCode ?? ""
         beaconInterval = n.beaconInterval
         isIBSS = n.ibss
+        vendor = VendorDB.lookup(bssid: b)
         let ie = IEParser.parse(n.informationElementData, band: band)
         phyMode = ie.phyMode
         stationCount = ie.stationCount

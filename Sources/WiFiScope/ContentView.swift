@@ -17,6 +17,7 @@ struct ContentView: View {
                 search.isEmpty
                     || $0.ssid.localizedCaseInsensitiveContains(search)
                     || $0.bssid.localizedCaseInsensitiveContains(search)
+                    || $0.vendorName.localizedCaseInsensitiveContains(search)
             }
             .sorted(using: sortOrder)
     }
@@ -59,7 +60,7 @@ struct ContentView: View {
             statusBar
         }
         .toolbar { toolbarContent }
-        .searchable(text: $search, prompt: "搜索 SSID / BSSID")
+        .searchable(text: $search, prompt: "搜索 SSID / BSSID / 厂商")
         .onAppear {
             location.request()
             scanner.start()
@@ -67,14 +68,24 @@ struct ContentView: View {
         .onChange(of: location.isAuthorized) { granted in
             if granted { scanner.scan() }
         }
+        .onReceive(scanner.$networks) { list in
+            // 选中的网络在新一轮结果里消失了就清掉，否则图表会把其余网络全部变暗
+            let ids = Set(list.map(\.id))
+            let kept = selection.filter { ids.contains($0) }
+            if kept.count != selection.count { selection = kept }
+        }
     }
 
     // MARK: - 表格
 
     private var networkTable: some View {
         Table(filtered, selection: $selection, sortOrder: $sortOrder) {
+            // Table 最多 10 列，厂商 logo 放进 SSID 单元格，悬浮显示厂商名
             TableColumn("SSID", value: \.ssid) { n in
-                HStack(spacing: 4) {
+                HStack(spacing: 5) {
+                    if !n.bssid.isEmpty {
+                        VendorLogo(vendor: n.vendor)
+                    }
                     if n.isCurrent {
                         Image(systemName: "checkmark.circle.fill").foregroundStyle(.green)
                     }
@@ -90,9 +101,9 @@ struct ContentView: View {
                 SignalCell(rssi: n.rssi)
             }
             .width(min: 90, ideal: 110)
-            TableColumn("噪声", value: \.noise) { Text("\($0.noise) dBm") }
+            TableColumn("噪声", value: \.noise) { Text($0.hasNoise ? "\($0.noise) dBm" : "—") }
                 .width(min: 60, ideal: 70)
-            TableColumn("SNR", value: \.snr) { Text("\($0.snr) dB") }
+            TableColumn("SNR", value: \.snrSortKey) { Text($0.snr.map { "\($0) dB" } ?? "—") }
                 .width(min: 50, ideal: 60)
             TableColumn("频段", value: \.bandLabel) { BandBadge(band: $0.band) }
                 .width(min: 60, ideal: 70)
