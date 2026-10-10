@@ -16,7 +16,8 @@ final class LocationAuth: NSObject, ObservableObject, CLLocationManagerDelegate 
     }
 
     var isAuthorized: Bool {
-        status == .authorizedAlways || status == .authorizedWhenInUse
+        // macOS 上 whenInUse 授权也映射为 authorizedAlways（.authorizedWhenInUse 在 macOS SDK 中不可用）
+        status == .authorizedAlways
     }
 
     var isDenied: Bool {
