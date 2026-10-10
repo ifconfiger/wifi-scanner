@@ -1,0 +1,49 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "main-v*.*.*"
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    # macos-latest 为 Apple Silicon (arm64) runner
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Parse version
+        run: |
+          VERSION="${GITHUB_REF_NAME#main-v}"
+          if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "tag 格式应为 main-vX.Y.Z，实际：$GITHUB_REF_NAME" >&2
+            exit 1
+          fi
+          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+
+      - name: Build
+        env:
+          BUILD_NUMBER: ${{ github.run_number }}
+        run: |
+          swift --version
+          ./build.sh
+          lipo -archs build/WiFiScope.app/Contents/MacOS/WiFiScope
+
+      - name: Package
+        run: |
+          ZIP="WiFiScope-${VERSION}-macos-arm64.zip"
+          ditto -c -k --keepParent build/WiFiScope.app "$ZIP"
+          shasum -a 256 "$ZIP" > "$ZIP.sha256"
+          echo "ZIP=$ZIP" >> "$GITHUB_ENV"
+
+      - name: Create release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" "$ZIP" "$ZIP.sha256" \
+            --title "WiFiScope ${VERSION}" \
+            --generate-notes \
+            --notes "仅支持 Apple Silicon (arm64)，macOS 13+。未经 Developer ID 签名/公证，首次打开前执行：\`xattr -dr com.apple.quarantine /Applications/WiFiScope.app\`"
