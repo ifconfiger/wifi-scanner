@@ -18,8 +18,17 @@ if [[ -n "${VERSION:-}" ]]; then
   /usr/libexec/PlistBuddy -c "Set :CFBundleVersion ${BUILD_NUMBER:-1}" "$APP/Contents/Info.plist"
 fi
 
-# ad-hoc 签名：本机运行足够；分发给别人需要 Developer ID 签名 + 公证
-codesign --force --deep --sign - "$APP"
+# 签名：默认 ad-hoc（本机运行足够）；CI 设置 SIGN_IDENTITY 为 Developer ID 证书时
+# 开启 Hardened Runtime + 安全时间戳，满足公证要求
+SIGN_IDENTITY="${SIGN_IDENTITY:--}"
+if [[ "$SIGN_IDENTITY" == "-" ]]; then
+  codesign --force --sign - --entitlements Resources/WiFiScope.entitlements "$APP"
+else
+  codesign --force --options runtime --timestamp \
+    --entitlements Resources/WiFiScope.entitlements \
+    --sign "$SIGN_IDENTITY" "$APP"
+fi
+codesign --verify --strict "$APP"
 
 echo "完成：$APP"
 echo "运行：open $APP"

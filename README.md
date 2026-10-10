@@ -67,4 +67,4 @@ uv run tools/make_icon.py
 - **重复 BSSID**：CoreWLAN 偶尔把同一 BSS（多为路由器的隐藏 SSID）返回多次，已按 BSSID 合并成一行。
 - **连接设备数 / 信道利用率**：只有 AP 开启 BSS Load 广播时才有，很多家用路由器不广播。
 - **扫描频率**：系统对频繁扫描会限流，太快可能报错。
-- 分发给他人需要 Developer ID 签名 + 公证；build.sh 只做本机 ad-hoc 签名。
+- 本地 build.sh 只做 ad-hoc 签名；GitHub Release 由 CI 用 Developer ID 签名并公证（见 `.github/workflows/release.yml`）。
