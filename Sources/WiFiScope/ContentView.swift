@@ -60,7 +60,7 @@ struct ContentView: View {
             statusBar
         }
         .toolbar { toolbarContent }
-        .searchable(text: $search, prompt: "搜索 SSID / BSSID / 厂商")
+        .searchable(text: $search, prompt: "Search SSID / BSSID / vendor")
         .onAppear {
             location.request()
             scanner.start()
@@ -69,18 +69,18 @@ struct ContentView: View {
             if granted { scanner.scan() }
         }
         .onReceive(scanner.$networks) { list in
-            // 选中的网络在新一轮结果里消失了就清掉，否则图表会把其余网络全部变暗
+            // Drop selected networks that vanished from the new results, otherwise the charts dim everything else
             let ids = Set(list.map(\.id))
             let kept = selection.filter { ids.contains($0) }
             if kept.count != selection.count { selection = kept }
         }
     }
 
-    // MARK: - 表格
+    // MARK: - Table
 
     private var networkTable: some View {
         Table(filtered, selection: $selection, sortOrder: $sortOrder) {
-            // Table 最多 10 列，厂商 logo 放进 SSID 单元格，悬浮显示厂商名
+            // Table allows at most 10 columns, so the vendor logo lives in the SSID cell with the name on hover
             TableColumn("SSID", value: \.ssid) { n in
                 HStack(spacing: 5) {
                     if !n.bssid.isEmpty {
@@ -97,38 +97,40 @@ struct ContentView: View {
                 Text(n.bssid.isEmpty ? "—" : n.bssid).font(.system(.body, design: .monospaced))
             }
             .width(min: 130, ideal: 150)
-            TableColumn("信号", value: \.rssi) { n in
+            TableColumn("Signal", value: \.rssi) { n in
                 SignalCell(rssi: n.rssi)
             }
             .width(min: 90, ideal: 110)
-            TableColumn("噪声", value: \.noise) { Text($0.hasNoise ? "\($0.noise) dBm" : "—") }
+            TableColumn("Noise", value: \.noise) { Text($0.hasNoise ? "\($0.noise) dBm" : "—") }
                 .width(min: 60, ideal: 70)
             TableColumn("SNR", value: \.snrSortKey) { Text($0.snr.map { "\($0) dB" } ?? "—") }
                 .width(min: 50, ideal: 60)
-            TableColumn("频段", value: \.bandLabel) { BandBadge(band: $0.band) }
+            TableColumn("Band", value: \.bandLabel) { BandBadge(band: $0.band) }
                 .width(min: 60, ideal: 70)
-            TableColumn("信道", value: \.channel) { Text("\($0.channel)") }
+            TableColumn("Channel", value: \.channel) { Text("\($0.channel)") }
                 .width(min: 40, ideal: 50)
-            TableColumn("带宽", value: \.widthMHz) { Text("\($0.widthMHz) MHz") }
+            TableColumn("Width", value: \.widthMHz) { Text("\($0.widthMHz) MHz") }
                 .width(min: 60, ideal: 70)
-            TableColumn("安全", value: \.security)
+            TableColumn("Security", value: \.security)
                 .width(min: 80, ideal: 100)
-            TableColumn("协议", value: \.phyMode)
+            TableColumn("PHY", value: \.phyMode)
                 .width(min: 90, ideal: 110)
         }
     }
 
-    // MARK: - 其他
+    // MARK: - Other
 
     private var permissionBanner: some View {
         HStack {
             Image(systemName: "location.slash").foregroundStyle(.orange)
-            Text(location.isDenied
-                 ? "定位权限被拒绝：macOS 不允许读取 SSID/BSSID，列表只能显示信号与信道。"
-                 : "需要定位权限才能显示 SSID/BSSID（macOS 系统要求）。")
-            Spacer()
-            Button(location.isDenied ? "打开系统设置" : "授权") {
-                location.isDenied ? location.openSystemSettings() : location.request()
+            if location.isDenied {
+                Text("Location access denied: macOS won't reveal SSIDs/BSSIDs, so only signal and channel are shown.")
+                Spacer()
+                Button("Open System Settings") { location.openSystemSettings() }
+            } else {
+                Text("Location permission is required to show SSIDs/BSSIDs (a macOS requirement).")
+                Spacer()
+                Button("Allow") { location.request() }
             }
         }
         .padding(8)
@@ -142,13 +144,13 @@ struct ContentView: View {
             ForEach(Band.scannable) { b in
                 HStack(spacing: 4) {
                     Circle().fill(b.color).frame(width: 7, height: 7)
-                    Text("\(b.rawValue)：\(scanner.networks.filter { $0.band == b }.count)")
+                    Text(verbatim: "\(b.label): \(scanner.networks.filter { $0.band == b }.count)")
                 }
             }
             if let err = scanner.lastError {
                 Text(err).foregroundStyle(.red)
             } else if let t = scanner.lastScan {
-                Text("更新于 \(t.formatted(date: .omitted, time: .standard))")
+                Text("Updated \(t.formatted(date: .omitted, time: .standard))")
             }
         }
         .font(.caption)
@@ -161,27 +163,37 @@ struct ContentView: View {
     @ToolbarContentBuilder
     private var toolbarContent: some ToolbarContent {
         ToolbarItem(placement: .navigation) {
-            Picker("频段", selection: $bandFilter) {
-                ForEach(BandFilter.allCases) { Text($0.rawValue).tag($0) }
+            Picker("Band", selection: $bandFilter) {
+                ForEach(BandFilter.allCases) { Text($0.label).tag($0) }
             }
             .pickerStyle(.segmented)
         }
         ToolbarItemGroup(placement: .primaryAction) {
-            Toggle("自动刷新", isOn: $scanner.autoRefresh)
-            Picker("间隔", selection: $scanner.interval) {
-                Text("5 秒").tag(5.0)
-                Text("10 秒").tag(10.0)
-                Text("30 秒").tag(30.0)
-                Text("60 秒").tag(60.0)
+            Toggle("Auto Refresh", isOn: $scanner.autoRefresh)
+            // A menu-style Picker renders an empty label in the macOS 26 toolbar, so show the value ourselves
+            Menu {
+                Picker("Interval", selection: $scanner.interval) {
+                    ForEach([5, 10, 30, 60], id: \.self) { s in
+                        Text("\(s) s").tag(Double(s))
+                    }
+                }
+                .pickerStyle(.inline)
+                .labelsHidden()
+            } label: {
+                HStack(spacing: 4) {
+                    Image(systemName: "timer")
+                    Text("\(Int(scanner.interval)) s").monospacedDigit()
+                }
             }
-            .frame(width: 90)
+            .fixedSize()
+            .help("Refresh interval")
             Button {
                 scanner.scan()
             } label: {
                 if scanner.isScanning {
                     ProgressView().controlSize(.small)
                 } else {
-                    Label("扫描", systemImage: "arrow.clockwise")
+                    Label("Scan", systemImage: "arrow.clockwise")
                 }
             }
             .keyboardShortcut("r")
@@ -189,7 +201,7 @@ struct ContentView: View {
             Button {
                 showDetail.toggle()
             } label: {
-                Label("详情", systemImage: "sidebar.right")
+                Label("Details", systemImage: "sidebar.right")
             }
             .keyboardShortcut("i")
         }

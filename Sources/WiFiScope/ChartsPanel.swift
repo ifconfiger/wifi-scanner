@@ -2,12 +2,18 @@ import Charts
 import SwiftUI
 
 enum ChartMode: String, CaseIterable, Identifiable {
-    case spectrum = "信道分布"
-    case ranking = "信号排行"
-    case congestion = "信道拥挤度"
-    case history = "信号历史"
+    case spectrum, ranking, congestion, history
 
     var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .spectrum: return String(localized: "Channels")
+        case .ranking: return String(localized: "Signal Ranking")
+        case .congestion: return String(localized: "Congestion")
+        case .history: return String(localized: "Signal History")
+        }
+    }
 
     var icon: String {
         switch self {
@@ -19,7 +25,7 @@ enum ChartMode: String, CaseIterable, Identifiable {
     }
 }
 
-/// 下半区图表。频段由工具栏的筛选控制；选“全部”时按频段分块展示。
+/// Bottom chart area. The band comes from the toolbar filter; "All" shows one block per band.
 struct ChartsPanel: View {
     let networks: [WiFiNetwork]
     let history: [String: [SignalSample]]
@@ -40,7 +46,7 @@ struct ChartsPanel: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             Picker("", selection: $mode) {
-                ForEach(ChartMode.allCases) { Label($0.rawValue, systemImage: $0.icon).tag($0) }
+                ForEach(ChartMode.allCases) { Label($0.title, systemImage: $0.icon).tag($0) }
             }
             .pickerStyle(.segmented)
             .labelsHidden()
@@ -69,7 +75,7 @@ struct ChartsPanel: View {
         .padding(10)
     }
 
-    /// 单频段时铺满；多频段时每个频段一块，可滚动
+    /// A single band fills the area; multiple bands get one scrollable block each
     @ViewBuilder
     private func perBand<C: View>(@ViewBuilder _ chart: @escaping (Band) -> C) -> some View {
         if bands.count == 1, let b = bands.first {
@@ -95,15 +101,15 @@ struct ChartsPanel: View {
     private func bandHeader(_ b: Band) -> some View {
         HStack(spacing: 6) {
             Circle().fill(b.color).frame(width: 8, height: 8)
-            Text(b.rawValue).font(.subheadline.weight(.semibold))
-            Text("\(networks.filter { $0.band == b }.count) 个网络")
+            Text(b.label).font(.subheadline.weight(.semibold))
+            Text("\(networks.filter { $0.band == b }.count) networks")
                 .font(.caption)
                 .foregroundStyle(.secondary)
         }
     }
 }
 
-// MARK: - 信道分布：每个 AP 一条梯形，横轴信道、纵轴信号强度、顶部标注 SSID
+// MARK: - Channels: one trapezoid per AP; x = channel, y = signal, SSID labeled on top
 
 struct SpectrumChart: View {
     let networks: [WiFiNetwork]
@@ -112,19 +118,21 @@ struct SpectrumChart: View {
     let onSelect: (String?) -> Void
 
     var body: some View {
-        // 同名同色；没有 SSID 的（隐藏/无权限）各自按 id 取色，否则全挤成一个颜色
+        // Same name, same color; networks without an SSID (hidden / no permission) are colored by id so they don't all share one
         let colorKey = { (n: WiFiNetwork) in n.ssid.isEmpty ? n.id : n.ssid }
         let colors = Palette.assign(networks.map(colorKey))
+        // Corner rounding scales with the axis so it looks the same on every band
+        let cornerX = (band.channelDomain.upperBound - band.channelDomain.lowerBound) * 0.012
         Chart {
             ForEach(networks) { n in
                 let selected = selection.contains(n.id)
                 let dimmed = !selection.isEmpty && !selected
                 let color = colors[colorKey(n)] ?? .accentColor
-                ForEach(Array(n.spectrumShape().enumerated()), id: \.offset) { _, p in
-                    // 半透明渐变填充 + 实线描边；用显式颜色而不是 foregroundStyle(by:)，默认配色偏灰
+                ForEach(Array(n.spectrumShape(cornerX: cornerX, cornerY: 5).enumerated()), id: \.offset) { _, p in
+                    // Translucent gradient fill + solid stroke; explicit colors instead of foregroundStyle(by:), whose defaults look washed out
                     AreaMark(
-                        x: .value("信道", p.x),
-                        yStart: .value("底", -100.0),
+                        x: .value("Channel", p.x),
+                        yStart: .value("Floor", -100.0),
                         yEnd: .value("dBm", p.y),
                         series: .value("BSSID", n.id)
                     )
@@ -136,17 +144,17 @@ struct SpectrumChart: View {
                     )
                     .opacity(dimmed ? 0.15 : 1)
                     LineMark(
-                        x: .value("信道", p.x),
+                        x: .value("Channel", p.x),
                         y: .value("dBm", p.y),
                         series: .value("BSSID", n.id)
                     )
-                    // 网络多时曲线挤在一起，描边也带点透明度，选中的才用实色
+                    // With many networks the curves crowd together, so strokes are slightly transparent; only the selection is solid
                     .foregroundStyle(color.opacity(selected ? 1 : 0.7))
                     .lineStyle(StrokeStyle(lineWidth: selected ? 3 : 1.6, lineJoin: .round))
                     .opacity(dimmed ? 0.25 : 1)
                 }
-                // 只用来挂 SSID 标注：点本身不画（用 symbolSize(0)，避免 opacity 把标注也隐藏）
-                PointMark(x: .value("信道", n.centerChannel), y: .value("dBm", Double(n.rssi)))
+                // Only carries the SSID annotation: the point itself is invisible (symbolSize(0), since opacity would hide the annotation too)
+                PointMark(x: .value("Channel", n.centerChannel), y: .value("dBm", Double(n.rssi)))
                     .symbolSize(0)
                     .annotation(position: .top, spacing: 1) {
                         Text(n.displaySSID)
@@ -159,11 +167,11 @@ struct SpectrumChart: View {
         .chartXScale(domain: band.channelDomain)
         .chartYScale(domain: -100 ... -20)
         .chartXAxis { AxisMarks(values: band.axisTicks) }
-        .chartXAxisLabel("信道")
+        .chartXAxisLabel("Channel")
         .chartYAxisLabel("dBm")
         .chartLegend(.hidden)
         .chartOverlay { proxy in
-            // 点击曲线选中网络；点空白处取消选择
+            // Click a curve to select it; click empty space to deselect
             GeometryReader { geo in
                 Rectangle().fill(.clear).contentShape(Rectangle())
                     .onTapGesture { loc in
@@ -180,13 +188,13 @@ struct SpectrumChart: View {
         }
         .overlay {
             if networks.isEmpty {
-                Text("该频段没有扫描到网络").foregroundStyle(.secondary)
+                Text("No networks found in this band").foregroundStyle(.secondary)
             }
         }
     }
 }
 
-// MARK: - 信号排行：横向条形图，按频段着色
+// MARK: - Signal ranking: horizontal bars colored by band
 
 struct RankingChart: View {
     let networks: [WiFiNetwork]
@@ -213,15 +221,15 @@ struct RankingChart: View {
                 ForEach(Band.scannable) { b in
                     HStack(spacing: 4) {
                         Circle().fill(b.color).frame(width: 8, height: 8)
-                        Text(b.rawValue).font(.caption)
+                        Text(b.label).font(.caption)
                     }
                 }
                 Spacer()
-                Text("按信号强度排序，最多显示 60 个").font(.caption).foregroundStyle(.secondary)
+                Text("Sorted by signal strength, up to 60 shown").font(.caption).foregroundStyle(.secondary)
             }
             if rows.isEmpty {
                 Spacer()
-                Text("没有网络").foregroundStyle(.secondary).frame(maxWidth: .infinity)
+                Text("No networks").foregroundStyle(.secondary).frame(maxWidth: .infinity)
                 Spacer()
             } else {
                 ScrollView {
@@ -229,9 +237,9 @@ struct RankingChart: View {
                         BarMark(
                             xStart: .value("dBm", -100),
                             xEnd: .value("dBm", item.n.rssi),
-                            y: .value("网络", item.label)
+                            y: .value("Network", item.label)
                         )
-                        .foregroundStyle(by: .value("频段", item.n.band.rawValue))
+                        .foregroundStyle(by: .value("Band", item.n.band.rawValue))
                         .opacity(selection.isEmpty || selection.contains(item.id) ? 1 : 0.3)
                         .annotation(position: .trailing, spacing: 4) {
                             Text("\(item.n.rssi)").font(.caption2).monospacedDigit().foregroundStyle(.secondary)
@@ -261,12 +269,14 @@ struct RankingChart: View {
     }
 }
 
-// MARK: - 信道拥挤度：每个主信道上的 AP 数，按信号强弱堆叠
+// MARK: - Congestion: AP count per primary channel, stacked by signal strength
 
 struct CongestionChart: View {
     let networks: [WiFiNetwork]
 
-    private static let levels = ["强 (≥ -60)", "中 (-75 ~ -60)", "弱 (< -75)"]
+    private static let levels = [
+        String(localized: "Strong (≥ -60)"), String(localized: "Medium (-75 ~ -60)"), String(localized: "Weak (< -75)"),
+    ]
 
     private struct Bucket: Identifiable {
         let channel: Int
@@ -294,25 +304,25 @@ struct CongestionChart: View {
         let channels = Set(networks.map(\.channel)).sorted().map(String.init)
         Chart(buckets) { b in
             BarMark(
-                x: .value("信道", String(b.channel)),
-                y: .value("AP 数", b.count)
+                x: .value("Channel", String(b.channel)),
+                y: .value("APs", b.count)
             )
-            .foregroundStyle(by: .value("强度", b.level))
+            .foregroundStyle(by: .value("Strength", b.level))
         }
         .chartXScale(domain: channels)
         .chartForegroundStyleScale(domain: Self.levels, range: [Color.green, .yellow, .red])
         .chartLegend(position: .top, alignment: .trailing)
-        .chartXAxisLabel("主信道")
-        .chartYAxisLabel("AP 数")
+        .chartXAxisLabel("Primary Channel")
+        .chartYAxisLabel("APs")
         .overlay {
             if networks.isEmpty {
-                Text("该频段没有扫描到网络").foregroundStyle(.secondary)
+                Text("No networks found in this band").foregroundStyle(.secondary)
             }
         }
     }
 }
 
-// MARK: - 信号历史
+// MARK: - Signal history
 
 struct HistorySeries: Identifiable {
     let id: String
@@ -335,12 +345,18 @@ struct HistoryChart: View {
             return HistorySeries(id: id, label: "\(name) (\(id.suffix(5)))", samples: samples)
         }
         VStack(alignment: .leading, spacing: 4) {
-            Text(selection.isEmpty ? "最近 5 分钟（信号最强的 5 个）" : "最近 5 分钟（已选 \(selection.count) 个）")
+            Group {
+                if selection.isEmpty {
+                    Text("Last 5 minutes (5 strongest)")
+                } else {
+                    Text("Last 5 minutes (\(selection.count) selected)")
+                }
+            }
                 .font(.caption)
                 .foregroundStyle(.secondary)
             if series.isEmpty {
                 Spacer()
-                Text("暂无数据（需要定位权限才能按 BSSID 记录历史）")
+                Text("No data yet (location permission is needed to track history by BSSID)")
                     .foregroundStyle(.secondary)
                     .frame(maxWidth: .infinity)
                 Spacer()
@@ -349,11 +365,11 @@ struct HistoryChart: View {
                     ForEach(series) { s in
                         ForEach(s.samples) { sample in
                             LineMark(
-                                x: .value("时间", sample.date),
+                                x: .value("Time", sample.date),
                                 y: .value("dBm", sample.rssi),
                                 series: .value("BSSID", s.id)
                             )
-                            .foregroundStyle(by: .value("网络", s.label))
+                            .foregroundStyle(by: .value("Network", s.label))
                             .interpolationMethod(.monotone)
                         }
                     }

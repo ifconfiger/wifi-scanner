@@ -1,7 +1,7 @@
 import SwiftUI
 
 extension Band {
-    /// 与图标配色一致：2.4G 橙、5G 蓝、6G 紫
+    /// Matches the app icon: 2.4 GHz orange, 5 GHz blue, 6 GHz purple
     var color: Color {
         switch self {
         case .ghz24: return .orange
@@ -16,7 +16,7 @@ struct BandBadge: View {
     let band: Band
 
     var body: some View {
-        Text(band.rawValue)
+        Text(band.label)
             .font(.caption.weight(.semibold))
             .padding(.horizontal, 6)
             .padding(.vertical, 1)
@@ -52,22 +52,22 @@ struct SignalCell: View {
     }
 }
 
-/// 高饱和度调色板：信道分布曲线和厂商首字母图标共用，按名字稳定取色（每次启动颜色不变）
+/// High-saturation palette shared by spectrum curves and vendor monograms; colors are picked stably by name (same across launches)
 enum Palette {
-    // 色相尽量拉开，相邻两个对比强；暖色只留 3 个，避免和 2.4 GHz 的橙色混成一片
+    // Hues spread apart with strong contrast between neighbors; only 3 warm colors so they don't blur with the 2.4 GHz orange
     private static let vividHex: [UInt32] = [
-        0x2F7BFF,  // 蓝
-        0xFF2D78,  // 玫红
-        0x1DBF5E,  // 绿
-        0x9B4DFF,  // 紫
-        0xFF8A00,  // 橙
-        0x00B8D9,  // 青
-        0xE5262B,  // 红
-        0x8BC400,  // 黄绿
-        0x5B5BF0,  // 靛
-        0xF2B600,  // 金黄
-        0x00A39A,  // 蓝绿
-        0xD63AF9,  // 品红
+        0x2F7BFF,  // blue
+        0xFF2D78,  // rose
+        0x1DBF5E,  // green
+        0x9B4DFF,  // purple
+        0xFF8A00,  // orange
+        0x00B8D9,  // cyan
+        0xE5262B,  // red
+        0x8BC400,  // yellow-green
+        0x5B5BF0,  // indigo
+        0xF2B600,  // gold
+        0x00A39A,  // teal
+        0xD63AF9,  // magenta
     ]
 
     static let vivid: [Color] = vividHex.map { hex in
@@ -81,8 +81,8 @@ enum Palette {
         vivid[Int(stableHash(key) % UInt64(vivid.count))]
     }
 
-    /// 给一组名字分配颜色：优先用 hash 对应的颜色，被占了就顺延到下一个空位，
-    /// 同一张图里不同名字尽量不撞色，网络增减时大部分颜色保持不变
+    /// Assign colors to a set of names: use the hashed slot first, probing to the next free one if taken,
+    /// so different names in one chart rarely collide and most colors stay put as networks come and go
     static func assign(_ keys: [String]) -> [String: Color] {
         var used = Set<Int>()
         var result: [String: Color] = [:]
@@ -97,7 +97,7 @@ enum Palette {
         return result
     }
 
-    /// FNV-1a；String.hashValue 每次启动随机，不能用来取色
+    /// FNV-1a; String.hashValue is randomized per launch and can't be used for colors
     static func stableHash(_ s: String) -> UInt64 {
         var h: UInt64 = 0xcbf2_9ce4_8422_2325
         for b in s.utf8 {

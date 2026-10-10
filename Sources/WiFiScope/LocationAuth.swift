@@ -2,7 +2,7 @@ import AppKit
 import Combine
 import CoreLocation
 
-/// macOS 14 起，没有定位授权时 CoreWLAN 的 ssid/bssid 一律返回 nil。
+/// Since macOS 14, CoreWLAN returns nil for ssid/bssid without location authorization.
 final class LocationAuth: NSObject, ObservableObject, CLLocationManagerDelegate {
     @Published private(set) var status: CLAuthorizationStatus
     private let manager: CLLocationManager
@@ -16,7 +16,7 @@ final class LocationAuth: NSObject, ObservableObject, CLLocationManagerDelegate 
     }
 
     var isAuthorized: Bool {
-        // macOS 上 whenInUse 授权也映射为 authorizedAlways（.authorizedWhenInUse 在 macOS SDK 中不可用）
+        // On macOS, when-in-use authorization also maps to authorizedAlways (.authorizedWhenInUse is unavailable in the macOS SDK)
         status == .authorizedAlways
     }
 
@@ -27,7 +27,7 @@ final class LocationAuth: NSObject, ObservableObject, CLLocationManagerDelegate 
     func request() {
         guard status == .notDetermined else { return }
         manager.requestWhenInUseAuthorization()
-        // 部分 macOS 版本只有真正请求位置时才弹授权框
+        // Some macOS versions only show the prompt once location is actually requested
         manager.startUpdatingLocation()
     }
 

@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   build:
-    # macos-latest 为 Apple Silicon (arm64) runner
+    # macos-latest is an Apple Silicon (arm64) runner
     runs-on: macos-latest
     env:
       APPLE_SIGN_P12: ${{ secrets.APPLE_SIGN_P12 }}
@@ -25,12 +25,12 @@ jobs:
         run: |
           VERSION="${GITHUB_REF_NAME#main-v}"
           if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-            echo "tag 格式应为 main-vX.Y.Z，实际：$GITHUB_REF_NAME" >&2
+            echo "Tag must look like main-vX.Y.Z, got: $GITHUB_REF_NAME" >&2
             exit 1
           fi
           echo "VERSION=$VERSION" >> "$GITHUB_ENV"
 
-      # 证书 secrets 齐全才走 Developer ID 签名 + 公证；否则退回 ad-hoc（如 fork 仓库）
+      # Sign with Developer ID and notarize only when the secrets are present; otherwise fall back to ad-hoc (e.g. forks)
       - name: Check signing secrets
         run: |
           if [[ -n "$APPLE_SIGN_P12" && -n "$APPLE_SIGN_PASSWORD" ]]; then
@@ -38,10 +38,10 @@ jobs:
             if [[ -n "$APPLE_NOTARY_KEY" && -n "$APPLE_NOTARY_KEY_ID" && -n "$APPLE_NOTARY_ISSUER" ]]; then
               echo "NOTARIZE=1" >> "$GITHUB_ENV"
             else
-              echo "::warning::缺少 APPLE_NOTARY_* secrets，只签名不公证"
+              echo "::warning::APPLE_NOTARY_* secrets missing; signing without notarization"
             fi
           else
-            echo "::warning::缺少 APPLE_SIGN_* secrets，使用 ad-hoc 签名"
+            echo "::warning::APPLE_SIGN_* secrets missing; using ad-hoc signing"
           fi
 
       - name: Import signing certificate
@@ -64,7 +64,7 @@ jobs:
           IDENTITY="$(security find-identity -v -p codesigning "$KEYCHAIN" \
             | grep -o '"Developer ID Application: [^"]*"' | head -1 | tr -d '"')"
           if [[ -z "$IDENTITY" ]]; then
-            echo "p12 中没有 Developer ID Application 证书" >&2
+            echo "No Developer ID Application certificate in the p12" >&2
             security find-identity -v -p codesigning "$KEYCHAIN" >&2
             exit 1
           fi
@@ -84,7 +84,7 @@ jobs:
         if: env.NOTARIZE == '1'
         run: |
           KEY="$RUNNER_TEMP/AuthKey.p8"
-          # 兼容直接粘贴 .p8 内容或其 base64
+          # Accept either the raw .p8 contents or its base64
           if [[ "$APPLE_NOTARY_KEY" == *"BEGIN PRIVATE KEY"* ]]; then
             printf '%s\n' "$APPLE_NOTARY_KEY" > "$KEY"
           else
@@ -99,15 +99,15 @@ jobs:
           echo "$RESULT"
           ID="$(echo "$RESULT" | jq -r .id)"
           STATUS="$(echo "$RESULT" | jq -r .status)"
-          # 无论成败都打印日志，便于排查（Accepted 时也可能有警告）
+          # Always print the log for troubleshooting (Accepted submissions may still carry warnings)
           xcrun notarytool log "$ID" "${AUTH[@]}" || true
           rm -f "$KEY"
           if [[ "$STATUS" != "Accepted" ]]; then
-            echo "公证失败：$STATUS" >&2
+            echo "Notarization failed: $STATUS" >&2
             exit 1
           fi
 
-          # 钉入公证票据，离线也能通过 Gatekeeper
+          # Staple the ticket so Gatekeeper passes even offline
           xcrun stapler staple build/WiFiScope.app
           xcrun stapler validate build/WiFiScope.app
           spctl --assess --type execute -vv build/WiFiScope.app
@@ -123,11 +123,11 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          NOTES="仅支持 Apple Silicon (arm64)，macOS 13+。"
+          NOTES="Apple Silicon (arm64) only, macOS 13+."
           if [[ "${NOTARIZE:-}" == "1" ]]; then
-            NOTES+=" 已使用 Developer ID 签名并通过 Apple 公证，解压后直接打开即可。"
+            NOTES+=" Signed with Developer ID and notarized by Apple; unzip and open."
           else
-            NOTES+=" 未经公证，首次打开前执行：\`xattr -dr com.apple.quarantine /Applications/WiFiScope.app\`"
+            NOTES+=" Not notarized; before the first launch run: \`xattr -dr com.apple.quarantine /Applications/WiFiScope.app\`"
           fi
           gh release create "$GITHUB_REF_NAME" "$ZIP" "$ZIP.sha256" \
             --title "WiFiScope ${VERSION}" \

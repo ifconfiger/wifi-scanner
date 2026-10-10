@@ -1,0 +1,2 @@
+"NSLocationUsageDescription" = "macOS 要求获得定位权限后才能读取周边 Wi-Fi 的名称 (SSID) 和 BSSID。本应用不会记录或上传你的位置。";
+"NSLocationWhenInUseUsageDescription" = "macOS 要求获得定位权限后才能读取周边 Wi-Fi 的名称 (SSID) 和 BSSID。本应用不会记录或上传你的位置。";

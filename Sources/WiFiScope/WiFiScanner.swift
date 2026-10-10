@@ -3,9 +3,9 @@ import CoreWLAN
 import Foundation
 import SwiftUI
 
-/// 基于 CoreWLAN 的被动扫描器。
-/// scanForNetworks 由系统 Wi-Fi 驱动在保持关联的前提下做离信道扫描，不会断开当前连接，
-/// 但扫描期间会有短暂的延迟抖动，所以默认间隔不要设太短。
+/// Passive scanner built on CoreWLAN.
+/// scanForNetworks lets the system Wi-Fi driver do off-channel scans while staying associated, so the
+/// current connection is not dropped, but latency jitters briefly during a scan — keep the interval reasonable.
 @MainActor
 final class WiFiScanner: ObservableObject {
     @Published private(set) var networks: [WiFiNetwork] = []
@@ -29,14 +29,14 @@ final class WiFiScanner: ObservableObject {
         scheduleTimer()
     }
 
-    /// 系统最近一次扫描的缓存，几乎零耗时；启动时先展示，不用干等第一轮完整扫描（约 3~5 秒）
+    /// The system's most recent scan cache is nearly free; show it at launch instead of waiting for the first full scan (~3–5 s)
     private func showCached() {
         guard let iface = client.interface(), iface.powerOn() else { return }
         Task {
             let list = await Task.detached(priority: .userInitiated) {
                 Self.build(iface.cachedScanResults() ?? [], current: iface.bssid())
             }.value
-            // 真实扫描已经先回来就不用缓存了
+            // Skip the cache if a real scan already came back
             if networks.isEmpty { insertNew(list) }
         }
     }
@@ -44,17 +44,17 @@ final class WiFiScanner: ObservableObject {
     func scan() {
         guard !isScanning else { return }
         guard let iface = client.interface() else {
-            lastError = "未找到 Wi-Fi 接口"
+            lastError = String(localized: "No Wi-Fi interface found")
             return
         }
         guard iface.powerOn() else {
-            lastError = "Wi-Fi 已关闭，请先打开 Wi-Fi"
+            lastError = String(localized: "Wi-Fi is off. Turn on Wi-Fi first.")
             return
         }
         isScanning = true
 
-        // CoreWLAN 的扫描是阻塞调用、一次性返回全部结果，没有逐个回调的公开 API。
-        // 扫描期间轮询系统缓存，缓存里出现的新网络先插进列表，扫完再用完整结果校正。
+        // CoreWLAN scanning is a blocking call that returns everything at once; there is no public per-network callback.
+        // Poll the system cache while scanning, insert newly seen networks early, then reconcile with the full result.
         let poller = Task {
             while !Task.isCancelled {
                 try? await Task.sleep(nanoseconds: 400_000_000)
@@ -69,7 +69,7 @@ final class WiFiScanner: ObservableObject {
         Task {
             let result = await Task.detached(priority: .userInitiated) { () -> Result<[WiFiNetwork], Error> in
                 do {
-                    // ssid=nil 表示扫描全部；includeHidden 带上隐藏网络
+                    // ssid=nil scans everything; includeHidden also returns hidden networks
                     let found = try iface.scanForNetworks(withSSID: nil, includeHidden: true)
                     return .success(Self.build(found, current: iface.bssid()))
                 } catch {
@@ -83,7 +83,7 @@ final class WiFiScanner: ObservableObject {
                 apply(list)
                 lastError = nil
             case .failure(let error):
-                lastError = "扫描失败：\(error.localizedDescription)"
+                lastError = String(localized: "Scan failed: \(error.localizedDescription)")
             }
             updateCurrentLink(iface)
             isScanning = false
@@ -91,7 +91,7 @@ final class WiFiScanner: ObservableObject {
     }
 
     private nonisolated static func build(_ found: Set<CWNetwork>, current: String?) -> [WiFiNetwork] {
-        // 扫描结果是无序 Set；先排序再给同名同信道的网络编号，没有 BSSID 时 id 才不会每轮乱跳
+        // Scan results are an unordered Set; sort first, then number same-name/same-channel networks so ids stay stable without BSSIDs
         let sorted = found.sorted {
             ($0.ssid ?? "", $0.wlanChannel?.channelNumber ?? 0, -$0.rssiValue)
                 < ($1.ssid ?? "", $1.wlanChannel?.channelNumber ?? 0, -$1.rssiValue)
@@ -103,8 +103,8 @@ final class WiFiScanner: ObservableObject {
             seen[key] = idx + 1
             return WiFiNetwork(network: net, currentBSSID: current, fallbackIndex: idx)
         }
-        // CoreWLAN 偶尔把同一个 BSS 返回多次（常见于路由器的隐藏 SSID），字段完全相同。
-        // BSSID 是行 id，重复会让表格选中一个就选中全部，按 BSSID 合并，优先保留有名字的那条
+        // CoreWLAN occasionally returns the same BSS several times (usually a router's hidden SSID) with identical fields.
+        // BSSID is the row id and duplicates make the table select them all together, so merge by BSSID, preferring the named one
         var index: [String: Int] = [:]
         var out: [WiFiNetwork] = []
         for n in list {
@@ -119,11 +119,11 @@ final class WiFiScanner: ObservableObject {
         return out
     }
 
-    /// 只追加列表里还没有的网络，已有的不动，避免缓存里的旧信号值把数字往回拉
+    /// Only append networks not yet listed; leave existing rows alone so stale cached signal values don't roll numbers back
     private func insertNew(_ list: [WiFiNetwork]) {
         let known = Set(networks.map(\.id))
-        // 系统缓存里常混着没有 BSSID 的条目，和带 BSSID 的同一个网络对不上 id，会变成重复行。
-        // 能拿到 BSSID（有定位权限）时就只收带 BSSID 的
+        // The system cache often mixes in entries without a BSSID whose ids don't match the same network with one, causing duplicate rows.
+        // When BSSIDs are available (location permission granted), only accept entries that have one
         let hasBSSID = (networks + list).contains { !$0.bssid.isEmpty }
         let fresh = list.filter { !known.contains($0.id) && (!hasBSSID || !$0.bssid.isEmpty) }
         guard !fresh.isEmpty else { return }
@@ -148,11 +148,11 @@ final class WiFiScanner: ObservableObject {
     private func updateCurrentLink(_ iface: CWInterface) {
         let name = iface.interfaceName ?? "en0"
         guard let ch = iface.wlanChannel() else {
-            currentLink = "\(name)：未连接"
+            currentLink = String(localized: "\(name): not connected")
             return
         }
-        let ssid = iface.ssid() ?? "(无权限读取 SSID)"
-        currentLink = "\(name)：\(ssid) · 信道 \(ch.channelNumber) · \(iface.rssiValue()) dBm · \(Int(iface.transmitRate())) Mbps"
+        let ssid = iface.ssid() ?? String(localized: "(no permission to read SSID)")
+        currentLink = String(localized: "\(name): \(ssid) · Channel \(ch.channelNumber) · \(iface.rssiValue()) dBm · \(Int(iface.transmitRate())) Mbps")
     }
 
     private func scheduleTimer() {

@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// 详情面板字段说明：一段解释 + 可选的好坏分级
+/// Field help for the detail panel: an explanation plus optional good/bad levels
 struct InfoTip {
     struct Level {
         let range: String
@@ -19,86 +19,143 @@ extension InfoTip.Level {
 }
 
 enum InfoTips {
-    /// 按详情面板的行标题取说明
-    static let all: [String: InfoTip] = [
-        // 基本信息
-        "SSID": InfoTip(text: "网络名称。隐藏网络不广播名称；没有定位权限时 macOS 也不给读取，都会显示为“隐藏/无权限”。"),
-        "BSSID": InfoTip(text: "AP 某个射频的 MAC 地址，一个 SSID 可以对应多个 BSSID（多台 AP、或同一台 AP 的 2.4/5/6 GHz 各一个）。macOS 要求定位权限才能读取。"),
-        "厂商": InfoTip(text: "由 BSSID 前 3 字节（OUI）查 IEEE 注册表得到。标“推测”的是虚拟 BSSID（本地管理地址），厂商由还原后的 OUI 推断，可能不准；手机热点通常用随机地址，查不到。"),
-        "安全": InfoTip(text: "认证/加密方式。", levels: [
-            .level("WPA3", "推荐", .green),
-            .level("WPA2/WPA3", "良好（兼容旧设备）", .green),
-            .level("WPA2", "可用", .yellow),
-            .level("WPA / WEP", "已不安全", .red),
-            .level("开放", "无加密，流量可被旁听", .red),
-        ]),
-        "协议": InfoTip(text: "AP 支持的最高 Wi-Fi 代际（由广播的信息元素推断）。代际越新，速率和多设备效率越高；实际速率还取决于终端是否支持。", levels: [
-            .level("be (Wi-Fi 7)", "最新", .green),
-            .level("ax (Wi-Fi 6/6E)", "主流", .green),
-            .level("ac (Wi-Fi 5)", "够用", .yellow),
-            .level("n (Wi-Fi 4) 及更早", "老旧，会拖慢同信道", .orange),
-        ]),
-        "国家/地区": InfoTip(text: "AP 广播的国家码，决定可用信道和最大发射功率。"),
-        "网络类型": InfoTip(text: "基础设施 = 普通路由器/AP；点对点 (IBSS) = 设备之间直连的 ad-hoc 网络，少见。"),
+    /// Detail panel rows; each has a title and a help tip
+    enum Field {
+        // Basics
+        case ssid, bssid, vendor, security, phy, country, networkType
+        // Radio
+        case band, primaryChannel, centerChannel, primaryFrequency, occupiedRange, channelWidth, beaconInterval
+        // Signal
+        case signalStrength, noise, snr, last5Min, firstSeen
+        // Channel environment
+        case coChannel, overlapping, stations, utilization
 
-        // 射频
-        "频段": InfoTip(text: "2.4 GHz 穿墙好、覆盖远，但只有 3 个不重叠信道（1/6/11），干扰多；5 GHz 信道多、速度快，穿墙较弱；6 GHz 最干净、最快，覆盖最短，需要 Wi-Fi 6E 以上设备。"),
-        "主信道": InfoTip(text: "AP 发信标所在的 20 MHz 信道。2.4 GHz 应只用 1 / 6 / 11，其他信道会同时干扰两边。"),
-        "中心信道": InfoTip(text: "多个 20 MHz 信道绑定成 40/80/160 MHz 后的中心位置，频谱图按它来画。2.4 GHz 的 40 MHz 拿不到扩展方向，是估算值。"),
-        "主信道频率": InfoTip(text: "主信道的中心频率。"),
-        "占用频率": InfoTip(text: "按带宽算出的实际占用频率范围，和别的 AP 有交叠就会互相干扰。"),
-        "信道带宽": InfoTip(text: "带宽越宽理论速率越高，但更容易和邻居重叠、抗干扰更差。", levels: [
-            .level("2.4 GHz", "建议 20 MHz", .yellow),
-            .level("5 GHz", "80 MHz 常用；拥挤时 40 MHz", .green),
-            .level("6 GHz", "160 MHz 也很常见", .green),
-        ]),
-        "信标间隔": InfoTip(text: "AP 广播信标的周期，1 TU = 1.024 ms。默认 100 TU，几乎所有设备都不需要改；过小浪费空口，过大影响终端发现和省电唤醒。"),
+        var title: String {
+            switch self {
+            case .ssid: return "SSID"
+            case .bssid: return "BSSID"
+            case .vendor: return String(localized: "Vendor")
+            case .security: return String(localized: "Security")
+            case .phy: return String(localized: "PHY")
+            case .country: return String(localized: "Country/Region")
+            case .networkType: return String(localized: "Network Type")
+            case .band: return String(localized: "Band")
+            case .primaryChannel: return String(localized: "Primary Channel")
+            case .centerChannel: return String(localized: "Center Channel")
+            case .primaryFrequency: return String(localized: "Primary Frequency")
+            case .occupiedRange: return String(localized: "Occupied Range")
+            case .channelWidth: return String(localized: "Channel Width")
+            case .beaconInterval: return String(localized: "Beacon Interval")
+            case .signalStrength: return String(localized: "Signal Strength")
+            case .noise: return String(localized: "Noise")
+            case .snr: return String(localized: "SNR")
+            case .last5Min: return String(localized: "Last 5 Minutes")
+            case .firstSeen: return String(localized: "First Seen")
+            case .coChannel: return String(localized: "Co-channel APs")
+            case .overlapping: return String(localized: "Overlapping APs")
+            case .stations: return String(localized: "Connected Clients")
+            case .utilization: return String(localized: "Channel Utilization")
+            }
+        }
 
-        // 信号
-        "信号强度": InfoTip(text: "RSSI，接收到的 AP 信号功率，单位 dBm，越接近 0 越强。每差 3 dB 功率差一倍。", levels: [
-            .level("≥ -50 dBm", "优秀：满速", .green),
-            .level("-60 ~ -50", "良好：视频会议、4K 都没问题", .green),
-            .level("-70 ~ -60", "一般：日常上网可以，速率下降", .yellow),
-            .level("-80 ~ -70", "较弱：容易卡顿、掉速", .orange),
-            .level("< -80 dBm", "很差：经常断连", .red),
-        ]),
-        "噪声": InfoTip(text: "该信道上的背景噪声，越低（越负）越好。CoreWLAN 只测当前连接的网络，其他网络显示“—”。", levels: [
-            .level("≤ -90 dBm", "安静", .green),
-            .level("-90 ~ -80", "有一定干扰", .yellow),
-            .level("> -80 dBm", "噪声大（微波炉、蓝牙、无线摄像头等）", .red),
-        ]),
-        "信噪比": InfoTip(text: "SNR = 信号强度 − 噪声，比单看信号更能反映实际体验：信号再强、噪声也高，速率照样上不去。只有当前连接的网络能算。", levels: [
-            .level("≥ 40 dB", "优秀：可跑最高调制速率", .green),
-            .level("25 ~ 40 dB", "良好", .green),
-            .level("15 ~ 25 dB", "一般：速率明显下降", .yellow),
-            .level("10 ~ 15 dB", "较差：不稳定", .orange),
-            .level("< 10 dB", "很差：基本连不上", .red),
-        ]),
-        "最近 5 分钟": InfoTip(text: "本次运行期间最近 5 分钟采到的信号最低/平均/最高值。最高和最低相差超过 10 dB 说明信号不稳定（人员走动、遮挡、AP 调功率等）。"),
-        "首次发现": InfoTip(text: "本次运行中第一次扫描到这个 BSSID 的时间。"),
-
-        // 信道环境
-        "同信道 AP": InfoTip(text: "主信道相同的其他 AP。同信道的 AP 会轮流占用空口（CSMA/CA），能互相听到就要排队，数量越多每个人分到的时间越少。", levels: [
-            .level("0 ~ 2 个", "空闲", .green),
-            .level("3 ~ 5 个", "有些拥挤", .yellow),
-            .level("> 5 个", "拥挤，考虑换信道", .red),
-        ]),
-        "频谱重叠 AP": InfoTip(text: "占用频率有交叠的 AP（含同信道）。部分重叠比同信道更糟：彼此无法正常协调，只能当噪声硬扛。"),
-        "已连接设备": InfoTip(text: "AP 在 BSS Load 信息里自报的已关联终端数。很多家用路由器不广播。", levels: [
-            .level("< 20 台", "轻松", .green),
-            .level("20 ~ 50 台", "繁忙", .yellow),
-            .level("> 50 台", "很满（企业 AP 常见）", .red),
-        ]),
-        "信道利用率": InfoTip(text: "AP 自报的信道忙碌时间比例，包括别的网络和干扰占用的时间，是判断信道是否拥挤最直接的指标。", levels: [
-            .level("< 30%", "空闲", .green),
-            .level("30% ~ 50%", "中等", .yellow),
-            .level("50% ~ 70%", "繁忙，延迟上升", .orange),
-            .level("> 70%", "拥塞，考虑换信道", .red),
-        ]),
-    ]
+        var tip: InfoTip {
+            switch self {
+            case .ssid:
+                return InfoTip(text: String(localized: "The network name. Hidden networks don't broadcast it, and macOS won't reveal it without location permission; both show as “hidden / no permission”."))
+            case .bssid:
+                return InfoTip(text: String(localized: "The MAC address of one AP radio. One SSID can have many BSSIDs (several APs, or one per 2.4/5/6 GHz radio on the same AP). macOS requires location permission to read it."))
+            case .vendor:
+                return InfoTip(text: String(localized: "Looked up from the first 3 bytes of the BSSID (OUI) in the IEEE registry. “Guessed” means a virtual BSSID (locally administered address) whose vendor was inferred from the restored OUI and may be wrong; phone hotspots usually use random addresses and can't be identified."))
+            case .security:
+                return InfoTip(text: String(localized: "Authentication / encryption method."), levels: [
+                    .level("WPA3", String(localized: "Recommended"), .green),
+                    .level("WPA2/WPA3", String(localized: "Good (works with older devices)"), .green),
+                    .level("WPA2", String(localized: "Acceptable"), .yellow),
+                    .level("WPA / WEP", String(localized: "No longer secure"), .red),
+                    .level(String(localized: "Open"), String(localized: "Unencrypted; traffic can be sniffed"), .red),
+                ])
+            case .phy:
+                return InfoTip(text: String(localized: "The newest Wi-Fi generation the AP supports (inferred from its information elements). Newer generations are faster and handle many devices better; actual speed also depends on the client."), levels: [
+                    .level("be (Wi-Fi 7)", String(localized: "Latest"), .green),
+                    .level("ax (Wi-Fi 6/6E)", String(localized: "Mainstream"), .green),
+                    .level("ac (Wi-Fi 5)", String(localized: "Adequate"), .yellow),
+                    .level(String(localized: "n (Wi-Fi 4) or older"), String(localized: "Legacy; slows down the whole channel"), .orange),
+                ])
+            case .country:
+                return InfoTip(text: String(localized: "The country code broadcast by the AP; it determines the allowed channels and maximum transmit power."))
+            case .networkType:
+                return InfoTip(text: String(localized: "Infrastructure = a regular router/AP. Ad-hoc (IBSS) = devices connected directly to each other; rare."))
+            case .band:
+                return InfoTip(text: String(localized: "2.4 GHz penetrates walls and reaches far, but has only 3 non-overlapping channels (1/6/11) and lots of interference. 5 GHz has more channels and is faster but weaker through walls. 6 GHz is the cleanest and fastest with the shortest range, and needs Wi-Fi 6E or newer devices."))
+            case .primaryChannel:
+                return InfoTip(text: String(localized: "The 20 MHz channel the AP sends beacons on. On 2.4 GHz only 1 / 6 / 11 should be used; other channels interfere with both neighbors."))
+            case .centerChannel:
+                return InfoTip(text: String(localized: "The center of the bonded 40/80/160 MHz channel; the spectrum chart is drawn around it. For 2.4 GHz 40 MHz the extension direction is unavailable, so it is estimated."))
+            case .primaryFrequency:
+                return InfoTip(text: String(localized: "The center frequency of the primary channel."))
+            case .occupiedRange:
+                return InfoTip(text: String(localized: "The frequency range actually occupied given the channel width. APs whose ranges overlap interfere with each other."))
+            case .channelWidth:
+                return InfoTip(text: String(localized: "Wider channels give higher theoretical speed but overlap neighbors more easily and tolerate interference worse."), levels: [
+                    .level("2.4 GHz", String(localized: "20 MHz recommended"), .yellow),
+                    .level("5 GHz", String(localized: "80 MHz typical; 40 MHz when crowded"), .green),
+                    .level("6 GHz", String(localized: "160 MHz is common too"), .green),
+                ])
+            case .beaconInterval:
+                return InfoTip(text: String(localized: "How often the AP broadcasts beacons; 1 TU = 1.024 ms. The default of 100 TU almost never needs changing; too small wastes airtime, too large hurts discovery and power-save wakeups."))
+            case .signalStrength:
+                return InfoTip(text: String(localized: "RSSI, the received AP signal power in dBm; closer to 0 is stronger. Every 3 dB is a doubling of power."), levels: [
+                    .level("≥ -50 dBm", String(localized: "Excellent: full speed"), .green),
+                    .level("-60 ~ -50", String(localized: "Good: video calls and 4K are fine"), .green),
+                    .level("-70 ~ -60", String(localized: "Fair: fine for browsing, slower speeds"), .yellow),
+                    .level("-80 ~ -70", String(localized: "Weak: stutters and slowdowns"), .orange),
+                    .level("< -80 dBm", String(localized: "Poor: frequent disconnects"), .red),
+                ])
+            case .noise:
+                return InfoTip(text: String(localized: "Background noise on the channel; lower (more negative) is better. CoreWLAN only measures the connected network; others show “—”."), levels: [
+                    .level("≤ -90 dBm", String(localized: "Quiet"), .green),
+                    .level("-90 ~ -80", String(localized: "Some interference"), .yellow),
+                    .level("> -80 dBm", String(localized: "Noisy (microwaves, Bluetooth, wireless cameras, …)"), .red),
+                ])
+            case .snr:
+                return InfoTip(text: String(localized: "SNR = signal strength − noise. It reflects real-world experience better than signal alone: a strong signal with high noise still won't be fast. Only available for the connected network."), levels: [
+                    .level("≥ 40 dB", String(localized: "Excellent: highest modulation rates"), .green),
+                    .level("25 ~ 40 dB", String(localized: "Good"), .green),
+                    .level("15 ~ 25 dB", String(localized: "Fair: noticeably slower"), .yellow),
+                    .level("10 ~ 15 dB", String(localized: "Poor: unstable"), .orange),
+                    .level("< 10 dB", String(localized: "Very poor: barely connects"), .red),
+                ])
+            case .last5Min:
+                return InfoTip(text: String(localized: "Min / average / max signal sampled over the last 5 minutes of this session. A spread over 10 dB means the signal is unstable (people moving, obstructions, AP power changes, …)."))
+            case .firstSeen:
+                return InfoTip(text: String(localized: "When this BSSID was first seen in this session."))
+            case .coChannel:
+                return InfoTip(text: String(localized: "Other APs on the same primary channel. Co-channel APs take turns using the air (CSMA/CA); if they can hear each other they queue, so the more there are, the less airtime each gets."), levels: [
+                    .level("0 ~ 2", String(localized: "Idle"), .green),
+                    .level("3 ~ 5", String(localized: "Somewhat crowded"), .yellow),
+                    .level("> 5", String(localized: "Crowded; consider changing channel"), .red),
+                ])
+            case .overlapping:
+                return InfoTip(text: String(localized: "APs whose occupied frequencies overlap (including co-channel). Partial overlap is worse than sharing a channel: the APs can't coordinate and just see each other as noise."))
+            case .stations:
+                return InfoTip(text: String(localized: "The number of associated clients the AP reports in its BSS Load element. Many home routers don't broadcast it."), levels: [
+                    .level("< 20", String(localized: "Light"), .green),
+                    .level("20 ~ 50", String(localized: "Busy"), .yellow),
+                    .level("> 50", String(localized: "Very full (common on enterprise APs)"), .red),
+                ])
+            case .utilization:
+                return InfoTip(text: String(localized: "The share of time the AP reports the channel as busy, including other networks and interference. It is the most direct measure of congestion."), levels: [
+                    .level("< 30%", String(localized: "Idle"), .green),
+                    .level("30% ~ 50%", String(localized: "Moderate"), .yellow),
+                    .level("50% ~ 70%", String(localized: "Busy; latency rises"), .orange),
+                    .level("> 70%", String(localized: "Congested; consider changing channel"), .red),
+                ])
+            }
+        }
+    }
 }
 
-/// 问号图标，鼠标悬浮弹出说明
+/// Question-mark icon that shows the tip on hover
 struct InfoTipButton: View {
     let title: String
     let tip: InfoTip

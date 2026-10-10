@@ -2,6 +2,13 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+    <key>CFBundleDevelopmentRegion</key>
+    <string>en</string>
+    <key>CFBundleLocalizations</key>
+    <array>
+        <string>en</string>
+        <string>zh-Hans</string>
+    </array>
     <key>CFBundleName</key>
     <string>WiFiScope</string>
     <key>CFBundleDisplayName</key>
@@ -13,7 +20,7 @@
     <key>CFBundlePackageType</key>
     <string>APPL</string>
     <key>CFBundleShortVersionString</key>
-    <string>0.1.0</string>
+    <string>0.2.0</string>
     <key>CFBundleVersion</key>
     <string>1</string>
     <key>LSMinimumSystemVersion</key>
@@ -24,10 +31,11 @@
     <string>NSApplication</string>
     <key>NSHighResolutionCapable</key>
     <true/>
-    <!-- macOS 14+ 读取 SSID/BSSID 需要定位授权，否则 CoreWLAN 返回 nil -->
+    <!-- macOS 14+ requires location authorization to read SSID/BSSID; otherwise CoreWLAN returns nil.
+         Localized in Resources/*.lproj/InfoPlist.strings -->
     <key>NSLocationUsageDescription</key>
-    <string>macOS 要求获得定位权限后才能读取周边 Wi-Fi 的名称 (SSID) 和 BSSID。本应用不会记录或上传你的位置。</string>
+    <string>macOS requires location permission before apps can read the names (SSID) and BSSIDs of nearby Wi-Fi networks. WiFiScope never records or uploads your location.</string>
     <key>NSLocationWhenInUseUsageDescription</key>
-    <string>macOS 要求获得定位权限后才能读取周边 Wi-Fi 的名称 (SSID) 和 BSSID。本应用不会记录或上传你的位置。</string>
+    <string>macOS requires location permission before apps can read the names (SSID) and BSSIDs of nearby Wi-Fi networks. WiFiScope never records or uploads your location.</string>
 </dict>
 </plist>

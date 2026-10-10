@@ -1,10 +1,10 @@
 # /// script
 # requires-python = ">=3.10"
 # ///
-"""从 IEEE 下载 MA-L (OUI-24) 注册表，生成 Resources/oui.tsv（每行：6 位十六进制 OUI \t 机构名）。
+"""Download the IEEE MA-L (OUI-24) registry and write Resources/oui.tsv (one line per entry: 6-hex-digit OUI \t organization).
 
-用法：uv run tools/update_oui.py
-注意：IEEE 会拒绝浏览器和 Python-urllib 的 User-Agent（返回 418/拒绝页），curl 的 UA 可以通过。
+Usage: uv run tools/update_oui.py
+Note: IEEE rejects browser and Python-urllib User-Agents (418 / block page); curl's UA gets through.
 """
 import csv
 import io
@@ -25,7 +25,7 @@ def main() -> None:
         if len(oui) == 6 and name:
             rows[oui] = name
     OUT.write_text("".join(f"{k}\t{v}\n" for k, v in sorted(rows.items())), encoding="utf-8")
-    print(f"写入 {OUT}：{len(rows)} 条")
+    print(f"Wrote {OUT}: {len(rows)} entries")
 
 
 if __name__ == "__main__":
