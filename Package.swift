@@ -2,12 +2,12 @@
 import PackageDescription
 
 let package = Package(
-    name: "WiFiScope",
+    name: "WiFi-Scanner",
     platforms: [.macOS(.v13)],
     targets: [
         .executableTarget(
-            name: "WiFiScope",
-            path: "Sources/WiFiScope",
+            name: "WiFiScanner",
+            path: "Sources/WiFiScanner",
             linkerSettings: [
                 .linkedFramework("CoreWLAN"),
                 .linkedFramework("CoreLocation"),

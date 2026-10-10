@@ -10,17 +10,18 @@
         <string>zh-Hans</string>
     </array>
     <key>CFBundleName</key>
-    <string>WiFiScope</string>
+    <string>WiFi-Scanner</string>
     <key>CFBundleDisplayName</key>
-    <string>WiFiScope</string>
+    <string>WiFi-Scanner</string>
     <key>CFBundleExecutable</key>
-    <string>WiFiScope</string>
+    <string>WiFiScanner</string>
+    <!-- Kept from the WiFiScope days: changing it would reset location permission and settings and break updates -->
     <key>CFBundleIdentifier</key>
     <string>com.local.wifiscope</string>
     <key>CFBundlePackageType</key>
     <string>APPL</string>
     <key>CFBundleShortVersionString</key>
-    <string>0.3.0</string>
+    <string>0.4.0</string>
     <key>CFBundleVersion</key>
     <string>1</string>
     <key>LSMinimumSystemVersion</key>
@@ -34,8 +35,8 @@
     <!-- macOS 14+ requires location authorization to read SSID/BSSID; otherwise CoreWLAN returns nil.
          Localized in Resources/*.lproj/InfoPlist.strings -->
     <key>NSLocationUsageDescription</key>
-    <string>macOS requires location permission before apps can read the names (SSID) and BSSIDs of nearby Wi-Fi networks. WiFiScope never records or uploads your location.</string>
+    <string>macOS requires location permission before apps can read the names (SSID) and BSSIDs of nearby Wi-Fi networks. WiFi-Scanner never records or uploads your location.</string>
     <key>NSLocationWhenInUseUsageDescription</key>
-    <string>macOS requires location permission before apps can read the names (SSID) and BSSIDs of nearby Wi-Fi networks. WiFiScope never records or uploads your location.</string>
+    <string>macOS requires location permission before apps can read the names (SSID) and BSSIDs of nearby Wi-Fi networks. WiFi-Scanner never records or uploads your location.</string>
 </dict>
 </plist>

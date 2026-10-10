@@ -1,2 +1,2 @@
-"NSLocationUsageDescription" = "macOS requires location permission before apps can read the names (SSID) and BSSIDs of nearby Wi-Fi networks. WiFiScope never records or uploads your location.";
-"NSLocationWhenInUseUsageDescription" = "macOS requires location permission before apps can read the names (SSID) and BSSIDs of nearby Wi-Fi networks. WiFiScope never records or uploads your location.";
+"NSLocationUsageDescription" = "macOS requires location permission before apps can read the names (SSID) and BSSIDs of nearby Wi-Fi networks. WiFi-Scanner never records or uploads your location.";
+"NSLocationWhenInUseUsageDescription" = "macOS requires location permission before apps can read the names (SSID) and BSSIDs of nearby Wi-Fi networks. WiFi-Scanner never records or uploads your location.";

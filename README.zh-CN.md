@@ -1,11 +1,11 @@
-# WiFiScope
+# WiFi-Scanner
 
 [English](README.md) | 简体中文
 
 类 WiFi Explorer 的 macOS 原生 Wi-Fi 扫描器：不断开当前连接，列出 2.4 / 5 / 6 GHz 周边网络，用图表展示信道、信号强度和网络名称。
 
 ## 安装
-从 [Releases](https://github.com/ifconfiger/wifi-scanner/releases) 下载最新的 `WiFiScope-x.y.z-macos-arm64.dmg`，打开后把 WiFiScope 拖到「应用程序」。App 和 DMG 均已用 Developer ID 签名并通过 Apple 公证；同时也附带 App 的 `.zip`。仅支持 Apple Silicon，macOS 13+。
+从 [Releases](https://github.com/ifconfiger/wifi-scanner/releases) 下载最新的 `WiFi-Scanner-x.y.z-macos-arm64.dmg`，打开后把 WiFi-Scanner 拖到「应用程序」。App 和 DMG 均已用 Developer ID 签名并通过 Apple 公证；同时也附带 App 的 `.zip`，供应用内自动升级使用。仅支持 Apple Silicon，macOS 13+。
 
 首次启动会弹出**定位权限**请求，必须允许，否则看不到 SSID/BSSID。
 
@@ -42,20 +42,22 @@
 - 列表 SSID 前的小图标是 AP 厂商 logo，悬浮显示品牌名、IEEE 注册名和 OUI；搜索框也能按厂商（含中文品牌名）搜。
 - 厂商由 BSSID 前 3 字节（OUI）查 `Resources/oui.tsv`（IEEE MA-L 注册表，离线）。更新：`uv run tools/update_oui.py`。
 - 虚拟 BSSID（本地管理地址，如小米 `5a:…`、Ubiquiti `66:…`）会清掉首字节低位再查，图标半透明、提示里标“推测”。手机热点的随机地址通常查不到，不显示图标。
-- logo 按品牌域名抓 favicon（DuckDuckGo → Google → 官网 `/favicon.ico`），缓存在 `~/Library/Caches/WiFiScope/logos/`；只发送品牌域名，不上传 BSSID。拿不到图时显示彩色首字母。
+- logo 按品牌域名抓 favicon（DuckDuckGo → Google → 官网 `/favicon.ico`），缓存在 `~/Library/Caches/WiFi-Scanner/logos/`；只发送品牌域名，不上传 BSSID。拿不到图时显示彩色首字母。
 
 ### 语言
-界面支持英文（默认）和简体中文。在菜单 **WiFiScope → Language / 语言** 中切换（English / 简体中文 / 跟随系统），切换后按提示重启生效。
+界面支持英文（默认）和简体中文。在菜单 **WiFi-Scanner → Language / 语言** 中切换（English / 简体中文 / 跟随系统），切换后按提示重启生效。
 
 ### 检查更新
-启动时自动检查 GitHub Releases（每天最多一次），有新版本时弹窗提示。点「下载」会把 DMG 存到「下载」文件夹并在访达中打开；退出 WiFiScope，把新版拖到「应用程序」并选择「替换」即可。也可以通过 **WiFiScope → 检查更新…** 手动检查，或在同一菜单关闭「自动检查更新」。
+WiFi-Scanner 支持自动升级。启动时检查 GitHub Releases（每天最多一次），有新版本时点「安装并重启」即可：后台下载（状态栏显示进度），校验是同一应用、同一 Developer ID 团队签名后原地替换当前版本并重启，定位权限和设置都会保留。若应用所在位置不可写，会在访达中显示新版本，手动移动即可。也可以通过 **WiFi-Scanner → 检查更新…** 手动检查，或在同一菜单关闭「自动检查更新」。
 
 ## 构建（需要 macOS 13+ 和 Xcode）
 ```bash
 ./build.sh
-open build/WiFiScope.app
+open build/WiFi-Scanner.app
 ```
-`build.sh` 编译 release 版本、打包成 `build/WiFiScope.app` 并做 ad-hoc 签名。若当前开发者目录是 Command Line Tools，会自动改用 `/Applications/Xcode.app`（macOS 26+ SDK 的 SwiftUI 宏插件只随 Xcode 提供）。
+`build.sh` 编译 release 版本、打包成 `build/WiFi-Scanner.app` 并做 ad-hoc 签名。若当前开发者目录是 Command Line Tools，会自动改用 `/Applications/Xcode.app`（macOS 26+ SDK 的 SwiftUI 宏插件只随 Xcode 提供）。
+
+`CONFIG=debug ./build.sh` 可打出 debug 版；用 `--args --debug-install-latest` 启动会不经确认直接安装最新发布版，用于本地验证升级流程（仅 debug 版有效）。
 
 开发调试可以 `open Package.swift` 用 Xcode 打开；但定位授权、图标和翻译只有用 build.sh 打出的 .app 运行才生效。
 
@@ -74,11 +76,11 @@ uv run tools/make_icon.py
 
 在 `./build.sh` 之后本地打 DMG：
 ```bash
-tools/make_dmg.sh            # → build/WiFiScope.dmg
+tools/make_dmg.sh            # → build/WiFi-Scanner.dmg
 ```
 
 ### 发版
-推送形如 `main-vX.Y.Z` 的 tag，`.github/workflows/release.yml` 会以该版本号构建 arm64 应用，用 Developer ID 签名、公证并钉入票据，再打成 DMG（`tools/make_dmg.sh`）并对 DMG 签名、公证、钉票（`tools/notarize.sh`），最后发布带 DMG、App zip 和 `SHA256SUMS.txt` 的 GitHub Release。检查更新依赖 `.dmg` 资源，命名请保持一致。缺少 `APPLE_SIGN_*` / `APPLE_NOTARY_*` secrets 时（如 fork 仓库）退回 ad-hoc 签名。
+推送形如 `main-vX.Y.Z` 的 tag，`.github/workflows/release.yml` 会以该版本号构建 arm64 应用，用 Developer ID 签名、公证并钉入票据，再打成 DMG（`tools/make_dmg.sh`）并对 DMG 签名、公证、钉票（`tools/notarize.sh`），最后发布带 DMG、App zip 和 `SHA256SUMS.txt` 的 GitHub Release。自动升级从 `.zip` 资源安装，每个版本都需保留。缺少 `APPLE_SIGN_*` / `APPLE_NOTARY_*` secrets 时（如 fork 仓库）退回 ad-hoc 签名。
 
 ## 原理
 - 扫描用 `CoreWLAN` 的 `CWInterface.scanForNetworks(withSSID:includeHidden:)`，这是阻塞调用（约 3~5 秒），一次性返回全部结果，没有逐个回调的公开 API。所以启动时先显示系统扫描缓存 `cachedScanResults()`（几乎瞬间），扫描期间轮询缓存把新出现的网络先插进列表，扫完再用完整结果校正。

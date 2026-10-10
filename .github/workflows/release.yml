@@ -77,21 +77,21 @@ jobs:
         run: |
           swift --version
           ./build.sh
-          lipo -archs build/WiFiScope.app/Contents/MacOS/WiFiScope
-          codesign -dv --entitlements - build/WiFiScope.app 2>&1
+          lipo -archs build/WiFi-Scanner.app/Contents/MacOS/WiFi-Scanner
+          codesign -dv --entitlements - build/WiFi-Scanner.app 2>&1
 
       # Notarize and staple the app first so the copy inside the DMG carries its own ticket
       - name: Notarize app
         if: env.NOTARIZE == '1'
         run: |
           SUBMIT_ZIP="$RUNNER_TEMP/notarize.zip"
-          ditto -c -k --keepParent build/WiFiScope.app "$SUBMIT_ZIP"
-          tools/notarize.sh "$SUBMIT_ZIP" build/WiFiScope.app
-          spctl --assess --type execute -vv build/WiFiScope.app
+          ditto -c -k --keepParent build/WiFi-Scanner.app "$SUBMIT_ZIP"
+          tools/notarize.sh "$SUBMIT_ZIP" build/WiFi-Scanner.app
+          spctl --assess --type execute -vv build/WiFi-Scanner.app
 
       - name: Build DMG
         run: |
-          DMG="WiFiScope-${VERSION}-macos-arm64.dmg"
+          DMG="WiFi-Scanner-${VERSION}-macos-arm64.dmg"
           tools/make_dmg.sh "build/$DMG"
           echo "DMG=$DMG" >> "$GITHUB_ENV"
 
@@ -103,9 +103,9 @@ jobs:
 
       - name: Package
         run: |
-          # The zip stays alongside the DMG for clients that still download it (≤ 0.2.0's update checker)
-          ZIP="WiFiScope-${VERSION}-macos-arm64.zip"
-          ditto -c -k --keepParent build/WiFiScope.app "build/$ZIP"
+          # The DMG is for people; the zip of the stapled app is what the in-app updater installs
+          ZIP="WiFi-Scanner-${VERSION}-macos-arm64.zip"
+          ditto -c -k --keepParent build/WiFi-Scanner.app "build/$ZIP"
           cd build
           shasum -a 256 "$DMG" "$ZIP" > SHA256SUMS.txt
           cat SHA256SUMS.txt
@@ -115,14 +115,14 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          NOTES="Download \`$DMG\`, open it and drag WiFiScope to Applications. Apple Silicon (arm64) only, macOS 13+."
+          NOTES="Download \`$DMG\`, open it and drag WiFi-Scanner to Applications. Apple Silicon (arm64) only, macOS 13+."
           if [[ "${NOTARIZE:-}" == "1" ]]; then
             NOTES+=" Signed with Developer ID and notarized by Apple."
           else
-            NOTES+=" Not notarized; before the first launch run: \`xattr -dr com.apple.quarantine /Applications/WiFiScope.app\`"
+            NOTES+=" Not notarized; before the first launch run: \`xattr -dr com.apple.quarantine /Applications/WiFi-Scanner.app\`"
           fi
           gh release create "$GITHUB_REF_NAME" "build/$DMG" "build/$ZIP" build/SHA256SUMS.txt \
-            --title "WiFiScope ${VERSION}" \
+            --title "WiFi-Scanner ${VERSION}" \
             --generate-notes \
             --notes "$NOTES"
 

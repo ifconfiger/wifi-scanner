@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Build and package WiFiScope.app (location authorization requires running as an .app bundle)
+# Build and package WiFi-Scanner.app (location authorization requires running as an .app bundle)
 set -euo pipefail
 cd "$(dirname "$0")"
 
@@ -9,12 +9,14 @@ if [[ -z "${DEVELOPER_DIR:-}" && "$(xcode-select -p)" == *CommandLineTools* && -
   export DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer
 fi
 
-swift build -c release
+# CONFIG=debug builds a debug binary (used to test the updater locally)
+CONFIG="${CONFIG:-release}"
+swift build -c "$CONFIG"
 
-APP=build/WiFiScope.app
+APP=build/WiFi-Scanner.app
 rm -rf "$APP"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
-cp "$(swift build -c release --show-bin-path)/WiFiScope" "$APP/Contents/MacOS/"
+cp "$(swift build -c "$CONFIG" --show-bin-path)/WiFiScanner" "$APP/Contents/MacOS/"
 cp Resources/Info.plist "$APP/Contents/"
 cp Resources/AppIcon.icns Resources/oui.tsv "$APP/Contents/Resources/"
 cp -R Resources/*.lproj "$APP/Contents/Resources/"
@@ -29,10 +31,10 @@ fi
 # certificate, enable the Hardened Runtime and a secure timestamp as notarization requires
 SIGN_IDENTITY="${SIGN_IDENTITY:--}"
 if [[ "$SIGN_IDENTITY" == "-" ]]; then
-  codesign --force --sign - --entitlements Resources/WiFiScope.entitlements "$APP"
+  codesign --force --sign - --entitlements Resources/WiFi-Scanner.entitlements "$APP"
 else
   codesign --force --options runtime --timestamp \
-    --entitlements Resources/WiFiScope.entitlements \
+    --entitlements Resources/WiFi-Scanner.entitlements \
     --sign "$SIGN_IDENTITY" "$APP"
 fi
 codesign --verify --strict "$APP"

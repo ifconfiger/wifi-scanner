@@ -1,7 +1,7 @@
 # /// script
 # dependencies = ["pillow>=10", "numpy"]
 # ///
-"""Generate the WiFiScope icon: dark rounded tile + channel spectrum curves for three bands + a Wi-Fi glyph.
+"""Generate the WiFi-Scanner icon: dark rounded tile + channel spectrum curves for three bands.
 Usage: uv run tools/make_icon.py  →  Resources/AppIcon.icns + Resources/AppIcon.png"""
 from pathlib import Path
 
@@ -71,20 +71,11 @@ def main():
         ImageDraw.Draw(fill).polygon(pts, fill=color + (95,))
         layer.alpha_composite(fill)
         glow = Image.new("RGBA", (S, S), (0, 0, 0, 0))
-        ImageDraw.Draw(glow).line(pts, fill=color + (200,), width=34, joint="curve")
-        layer.alpha_composite(glow.filter(ImageFilter.GaussianBlur(18)))
-        ImageDraw.Draw(layer).line(pts, fill=color + (255,), width=16, joint="curve")
+        ImageDraw.Draw(glow).line(pts, fill=color + (200,), width=48, joint="curve")
+        layer.alpha_composite(glow.filter(ImageFilter.GaussianBlur(22)))
+        ImageDraw.Draw(layer).line(pts, fill=color + (255,), width=24, joint="curve")
 
-    ImageDraw.Draw(layer).line((left, base_y, right, base_y), fill=(170, 195, 245, 200), width=8)
-
-    # Wi-Fi glyph in the top-right corner
-    wx, wy = body[0] + w * 0.80, body[1] + w * 0.25
-    for r in (0.15, 0.10, 0.05):
-        rr = w * r
-        d2 = ImageDraw.Draw(layer)
-        d2.arc((wx - rr, wy - rr, wx + rr, wy + rr), 225, 315, fill=(255, 255, 255, 245), width=int(w * 0.028))
-    dot = w * 0.02
-    ImageDraw.Draw(layer).ellipse((wx - dot, wy - dot, wx + dot, wy + dot), fill=(255, 255, 255, 245))
+    ImageDraw.Draw(layer).line((left, base_y, right, base_y), fill=(170, 195, 245, 200), width=12)
 
     clipped = Image.new("RGBA", (S, S), (0, 0, 0, 0))
     clipped.paste(layer, (0, 0), Image.composite(layer.getchannel("A"), Image.new("L", (S, S), 0), mask))

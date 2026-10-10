@@ -1,11 +1,11 @@
-# WiFiScope
+# WiFi-Scanner
 
 English | [简体中文](README.zh-CN.md)
 
 A native macOS Wi-Fi scanner in the spirit of WiFi Explorer. It lists nearby 2.4 / 5 / 6 GHz networks without dropping your current connection, and charts channels, signal strength and network names.
 
 ## Install
-Download the latest `WiFiScope-x.y.z-macos-arm64.dmg` from [Releases](https://github.com/ifconfiger/wifi-scanner/releases), open it and drag WiFiScope onto Applications. The app and the disk image are signed with a Developer ID and notarized by Apple. A `.zip` of the app is attached as well. Apple Silicon only, macOS 13+.
+Download the latest `WiFi-Scanner-x.y.z-macos-arm64.dmg` from [Releases](https://github.com/ifconfiger/wifi-scanner/releases), open it and drag WiFi-Scanner onto Applications. The app and the disk image are signed with a Developer ID and notarized by Apple. A `.zip` of the app is attached as well; the in-app updater uses it. Apple Silicon only, macOS 13+.
 
 On first launch macOS asks for **location permission**. Allow it, otherwise SSIDs and BSSIDs stay hidden.
 
@@ -42,20 +42,22 @@ On first launch macOS asks for **location permission**. Allow it, otherwise SSID
 - The small icon before each SSID is the AP vendor's logo. Hover it for the brand, IEEE organization name and OUI. The search box also matches vendors.
 - The vendor comes from the first 3 bytes of the BSSID (OUI), looked up offline in `Resources/oui.tsv` (the IEEE MA-L registry). Refresh it with `uv run tools/update_oui.py`.
 - Virtual BSSIDs (locally administered addresses, e.g. Xiaomi `5a:…`, Ubiquiti `66:…`) are looked up again with the low bits of the first byte cleared. Their icon is translucent and the tooltip says "guessed". Phone hotspots use random addresses and usually can't be identified, so no icon is shown.
-- Logos are favicons fetched by brand domain (DuckDuckGo → Google → the site's `/favicon.ico`) and cached in `~/Library/Caches/WiFiScope/logos/`. Only the brand domain is sent, never a BSSID. Without an image a colored monogram is shown.
+- Logos are favicons fetched by brand domain (DuckDuckGo → Google → the site's `/favicon.ico`) and cached in `~/Library/Caches/WiFi-Scanner/logos/`. Only the brand domain is sent, never a BSSID. Without an image a colored monogram is shown.
 
 ### Language
-The UI is available in English (default) and Simplified Chinese. Switch it from **WiFiScope → Language** (English / 简体中文 / Follow System); the app offers to restart to apply it.
+The UI is available in English (default) and Simplified Chinese. Switch it from **WiFi-Scanner → Language** (English / 简体中文 / Follow System); the app offers to restart to apply it.
 
 ### Updates
-WiFiScope checks GitHub Releases at launch (at most once a day) and offers a newer version. **Download** saves the DMG to `~/Downloads` and opens it in Finder; quit WiFiScope, drag the new copy onto Applications and choose Replace. Use **WiFiScope → Check for Updates…** to check manually, or turn off **Automatically Check for Updates** in the same menu.
+WiFi-Scanner updates itself. At launch (at most once a day) it checks GitHub Releases, and when a newer version exists **Install and Relaunch** downloads it in the background (progress shows in the status bar), verifies that it is the same app signed by the same Developer ID team, replaces the running copy in place and restarts. Location permission and settings carry over. If the app sits somewhere it can't write to, the new version is revealed in Finder to move manually. Use **WiFi-Scanner → Check for Updates…** to check manually, or turn off **Automatically Check for Updates** in the same menu.
 
 ## Building (macOS 13+, Xcode)
 ```bash
 ./build.sh
-open build/WiFiScope.app
+open build/WiFi-Scanner.app
 ```
-`build.sh` builds a release binary, packages it as `build/WiFiScope.app` and signs it ad-hoc. If the active developer directory is the Command Line Tools it switches to `/Applications/Xcode.app`, because the SwiftUI macros in the macOS 26+ SDK ship only with Xcode.
+`build.sh` builds a release binary, packages it as `build/WiFi-Scanner.app` and signs it ad-hoc. If the active developer directory is the Command Line Tools it switches to `/Applications/Xcode.app`, because the SwiftUI macros in the macOS 26+ SDK ship only with Xcode.
+
+`CONFIG=debug ./build.sh` builds a debug app; launching it with `--args --debug-install-latest` installs the latest release without prompting, to exercise the updater locally (debug builds only).
 
 For development you can `open Package.swift` in Xcode, but location permission, the icon and translations only work when running the `.app` produced by `build.sh`.
 
@@ -74,11 +76,11 @@ uv run tools/make_icon.py
 
 To package a disk image locally after `./build.sh`:
 ```bash
-tools/make_dmg.sh            # → build/WiFiScope.dmg
+tools/make_dmg.sh            # → build/WiFi-Scanner.dmg
 ```
 
 ### Releasing
-Push a tag of the form `main-vX.Y.Z`. `.github/workflows/release.yml` builds an arm64 app with that version, signs it with Developer ID, notarizes and staples it, packs it into a DMG (`tools/make_dmg.sh`), signs, notarizes and staples the DMG (`tools/notarize.sh`), and publishes a GitHub Release with the DMG, a zip of the app and `SHA256SUMS.txt`. The update checker looks for the `.dmg` asset, so keep that naming. Without the `APPLE_SIGN_*` / `APPLE_NOTARY_*` secrets (e.g. in a fork) it falls back to ad-hoc signing.
+Push a tag of the form `main-vX.Y.Z`. `.github/workflows/release.yml` builds an arm64 app with that version, signs it with Developer ID, notarizes and staples it, packs it into a DMG (`tools/make_dmg.sh`), signs, notarizes and staples the DMG (`tools/notarize.sh`), and publishes a GitHub Release with the DMG, a zip of the app and `SHA256SUMS.txt`. The updater installs from the `.zip` asset, so keep it in every release. Without the `APPLE_SIGN_*` / `APPLE_NOTARY_*` secrets (e.g. in a fork) it falls back to ad-hoc signing.
 
 ## How it works
 - Scanning uses CoreWLAN's `CWInterface.scanForNetworks(withSSID:includeHidden:)`. It blocks for about 3–5 seconds and returns everything at once; there is no public per-network callback. So the app first shows the system scan cache, `cachedScanResults()`, which is nearly instant. While a scan runs it polls that cache and inserts new networks early, then reconciles with the full result.

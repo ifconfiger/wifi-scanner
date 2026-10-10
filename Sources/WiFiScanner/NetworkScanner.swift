@@ -7,7 +7,7 @@ import SwiftUI
 /// scanForNetworks lets the system Wi-Fi driver do off-channel scans while staying associated, so the
 /// current connection is not dropped, but latency jitters briefly during a scan — keep the interval reasonable.
 @MainActor
-final class WiFiScanner: ObservableObject {
+final class NetworkScanner: ObservableObject {
     @Published private(set) var networks: [WiFiNetwork] = []
     @Published private(set) var history: [String: [SignalSample]] = [:]
     @Published private(set) var firstSeen: [String: Date] = [:]
