@@ -41,7 +41,7 @@ On first launch macOS asks for **location permission**. Allow it, otherwise SSID
 ### Vendor identification
 - The small icon before each SSID is the AP vendor's logo. Hover it for the brand, IEEE organization name and OUI. The search box also matches vendors.
 - The vendor comes from the first 3 bytes of the BSSID (OUI), looked up offline in `Resources/oui.tsv` (the IEEE MA-L registry). Refresh it with `uv run tools/update_oui.py`.
-- Virtual BSSIDs (locally administered addresses, e.g. Xiaomi `5a:…`, Ubiquiti `66:…`) are looked up again with the low bits of the first byte cleared. Their icon is translucent and the tooltip says "guessed". Phone hotspots use random addresses and usually show `?`.
+- Virtual BSSIDs (locally administered addresses, e.g. Xiaomi `5a:…`, Ubiquiti `66:…`) are looked up again with the low bits of the first byte cleared. Their icon is translucent and the tooltip says "guessed". Phone hotspots use random addresses and usually can't be identified, so no icon is shown.
 - Logos are favicons fetched by brand domain (DuckDuckGo → Google → the site's `/favicon.ico`) and cached in `~/Library/Caches/WiFiScope/logos/`. Only the brand domain is sent, never a BSSID. Without an image a colored monogram is shown.
 
 ### Language

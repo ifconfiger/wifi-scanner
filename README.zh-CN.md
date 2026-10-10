@@ -41,7 +41,7 @@
 ### 厂商识别
 - 列表 SSID 前的小图标是 AP 厂商 logo，悬浮显示品牌名、IEEE 注册名和 OUI；搜索框也能按厂商（含中文品牌名）搜。
 - 厂商由 BSSID 前 3 字节（OUI）查 `Resources/oui.tsv`（IEEE MA-L 注册表，离线）。更新：`uv run tools/update_oui.py`。
-- 虚拟 BSSID（本地管理地址，如小米 `5a:…`、Ubiquiti `66:…`）会清掉首字节低位再查，图标半透明、提示里标“推测”。手机热点的随机地址通常查不到，显示 `?`。
+- 虚拟 BSSID（本地管理地址，如小米 `5a:…`、Ubiquiti `66:…`）会清掉首字节低位再查，图标半透明、提示里标“推测”。手机热点的随机地址通常查不到，不显示图标。
 - logo 按品牌域名抓 favicon（DuckDuckGo → Google → 官网 `/favicon.ico`），缓存在 `~/Library/Caches/WiFiScope/logos/`；只发送品牌域名，不上传 BSSID。拿不到图时显示彩色首字母。
 
 ### 语言
