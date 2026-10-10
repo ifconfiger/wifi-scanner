@@ -55,7 +55,7 @@ struct SignalCell: View {
 /// 高饱和度调色板：信道分布曲线和厂商首字母图标共用，按名字稳定取色（每次启动颜色不变）
 enum Palette {
     // 色相尽量拉开，相邻两个对比强；暖色只留 3 个，避免和 2.4 GHz 的橙色混成一片
-    static let vivid: [Color] = [
+    private static let vividHex: [UInt32] = [
         0x2F7BFF,  // 蓝
         0xFF2D78,  // 玫红
         0x1DBF5E,  // 绿
@@ -68,7 +68,9 @@ enum Palette {
         0xF2B600,  // 金黄
         0x00A39A,  // 蓝绿
         0xD63AF9,  // 品红
-    ].map { hex in
+    ]
+
+    static let vivid: [Color] = vividHex.map { hex in
         Color(.sRGB,
               red: Double(hex >> 16 & 0xFF) / 255,
               green: Double(hex >> 8 & 0xFF) / 255,
