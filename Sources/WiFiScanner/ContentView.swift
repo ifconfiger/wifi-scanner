@@ -1,3 +1,4 @@
+import AppKit
 import SwiftUI
 
 struct ContentView: View {
@@ -29,42 +30,7 @@ struct ContentView: View {
     }
 
     var body: some View {
-        VStack(spacing: 0) {
-            if !location.isAuthorized {
-                permissionBanner
-            }
-            HSplitView {
-                VSplitView {
-                    networkTable
-                        .frame(minHeight: 200)
-                    ChartsPanel(
-                        networks: filtered,
-                        history: scanner.history,
-                        bandFilter: bandFilter,
-                        selection: $selection
-                    )
-                    .frame(minHeight: 280)
-                }
-                .frame(minWidth: 680)
-
-                if showDetail {
-                    DetailPanel(
-                        network: selectedNetwork,
-                        allNetworks: scanner.networks,
-                        samples: selectedNetwork.flatMap { scanner.history[$0.bssid] } ?? [],
-                        firstSeen: selectedNetwork.flatMap { scanner.firstSeen[$0.bssid] },
-                        selectionCount: selection.count
-                    )
-                    .frame(minWidth: 300, idealWidth: 340, maxWidth: 460)
-                }
-            }
-            statusBar
-        }
-        .toolbar { toolbarContent }
-        // On macOS 26 the content extends under a transparent toolbar, so the split view divider
-        // would run up behind the toolbar buttons; an opaque toolbar keeps it below the bar
-        .toolbarBackground(.visible, for: .windowToolbar)
-        .searchable(text: $search, prompt: "Search SSID / BSSID / vendor")
+        detailLayout
         .onAppear {
             location.request()
             scanner.start()
@@ -77,6 +43,61 @@ struct ContentView: View {
             let ids = Set(list.map(\.id))
             let kept = selection.filter { ids.contains($0) }
             if kept.count != selection.count { selection = kept }
+        }
+    }
+
+    private var workspace: some View {
+        VStack(spacing: 0) {
+            if !location.isAuthorized {
+                permissionBanner
+            }
+            VSplitView {
+                networkTable
+                    .frame(minHeight: 200)
+                ChartsPanel(
+                    networks: filtered,
+                    history: scanner.history,
+                    bandFilter: bandFilter,
+                    selection: $selection
+                )
+                .frame(minHeight: 280)
+            }
+            .frame(minWidth: 680)
+            statusBar
+        }
+        // Attached to the main column (not the window) so these items stay left of the inspector
+        .toolbar { toolbarContent }
+    }
+
+    private var detailPanel: some View {
+        DetailPanel(
+            network: selectedNetwork,
+            allNetworks: scanner.networks,
+            samples: selectedNetwork.flatMap { scanner.history[$0.bssid] } ?? [],
+            firstSeen: selectedNetwork.flatMap { scanner.firstSeen[$0.bssid] },
+            selectionCount: selection.count
+        )
+    }
+
+    /// An inspector gets its own toolbar section, so the scan / details buttons sit above the
+    /// detail panel instead of straddling the divider; macOS 13 falls back to a plain split view
+    @ViewBuilder
+    private var detailLayout: some View {
+        if #available(macOS 14, *) {
+            workspace
+                .inspector(isPresented: $showDetail) {
+                    detailPanel
+                        .inspectorColumnWidth(min: 300, ideal: 340, max: 460)
+                        .toolbar { inspectorToolbarContent }
+                }
+        } else {
+            HSplitView {
+                workspace
+                if showDetail {
+                    detailPanel
+                        .frame(minWidth: 300, idealWidth: 340, maxWidth: 460)
+                }
+            }
         }
     }
 
@@ -179,6 +200,9 @@ struct ContentView: View {
             .pickerStyle(.segmented)
         }
         ToolbarItemGroup(placement: .primaryAction) {
+            // .searchable always lands in the trailing (inspector) toolbar section, so use our own field
+            SearchField(text: $search, prompt: String(localized: "Search SSID / BSSID / vendor"))
+                .frame(width: 240)
             Toggle("Auto Refresh", isOn: $scanner.autoRefresh)
             // A menu-style Picker renders an empty label in the macOS 26 toolbar, so show the value ourselves
             Menu {
@@ -197,23 +221,69 @@ struct ContentView: View {
             }
             .fixedSize()
             .help("Refresh interval")
-            Button {
-                scanner.scan()
-            } label: {
-                if scanner.isScanning {
-                    ProgressView().controlSize(.small)
-                } else {
-                    Label("Scan", systemImage: "arrow.clockwise")
-                }
+        }
+        // With the inspector open these live in its own toolbar section, see inspectorToolbarContent
+        if !showDetail || !inspectorAvailable {
+            ToolbarItemGroup(placement: .primaryAction) { actionButtons }
+        }
+    }
+
+    @ToolbarContentBuilder
+    private var inspectorToolbarContent: some ToolbarContent {
+        ToolbarItemGroup(placement: .primaryAction) { actionButtons }
+    }
+
+    private var inspectorAvailable: Bool {
+        if #available(macOS 14, *) { return true }
+        return false
+    }
+
+    @ViewBuilder
+    private var actionButtons: some View {
+        Button {
+            scanner.scan()
+        } label: {
+            if scanner.isScanning {
+                ProgressView().controlSize(.small)
+            } else {
+                Label("Scan", systemImage: "arrow.clockwise")
             }
-            .keyboardShortcut("r")
-            .disabled(scanner.isScanning)
-            Button {
-                showDetail.toggle()
-            } label: {
-                Label("Details", systemImage: "sidebar.right")
-            }
-            .keyboardShortcut("i")
+        }
+        .keyboardShortcut("r")
+        .disabled(scanner.isScanning)
+        Button {
+            showDetail.toggle()
+        } label: {
+            Label("Details", systemImage: "sidebar.right")
+        }
+        .keyboardShortcut("i")
+    }
+}
+
+/// NSSearchField wrapper for the toolbar
+struct SearchField: NSViewRepresentable {
+    @Binding var text: String
+    let prompt: String
+
+    func makeNSView(context: Context) -> NSSearchField {
+        let field = NSSearchField()
+        field.delegate = context.coordinator
+        return field
+    }
+
+    func updateNSView(_ field: NSSearchField, context: Context) {
+        if field.stringValue != text { field.stringValue = text }
+        field.placeholderString = prompt
+    }
+
+    func makeCoordinator() -> Coordinator { Coordinator(text: $text) }
+
+    final class Coordinator: NSObject, NSSearchFieldDelegate {
+        @Binding var text: String
+        init(text: Binding<String>) { _text = text }
+
+        func controlTextDidChange(_ note: Notification) {
+            if let field = note.object as? NSSearchField { text = field.stringValue }
         }
     }
 }
