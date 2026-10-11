@@ -70,7 +70,6 @@ final class UpdateChecker: ObservableObject {
     struct Release: Decodable {
         let tagName: String
         let htmlURL: URL
-        let body: String?
         let assets: [Asset]
 
         struct Asset: Decodable {
@@ -86,7 +85,7 @@ final class UpdateChecker: ObservableObject {
         enum CodingKeys: String, CodingKey {
             case tagName = "tag_name"
             case htmlURL = "html_url"
-            case body, assets
+            case assets
         }
 
         var version: String {
@@ -128,11 +127,7 @@ final class UpdateChecker: ObservableObject {
     private func showUpdateAlert(_ release: Release, current: String) {
         let a = NSAlert()
         a.messageText = String(localized: "WiFi-Scanner \(release.version) is available")
-        var info = String(localized: "You have version \(current).")
-        if let notes = release.body?.trimmingCharacters(in: .whitespacesAndNewlines), !notes.isEmpty {
-            info += "\n\n" + String(notes.prefix(1200))
-        }
-        a.informativeText = info
+        a.informativeText = String(localized: "You have version \(current).")
         a.addButton(withTitle: String(localized: "Install and Relaunch"))
         a.addButton(withTitle: String(localized: "View Release"))
         a.addButton(withTitle: String(localized: "Later"))
