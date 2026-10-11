@@ -61,6 +61,9 @@ struct ContentView: View {
             statusBar
         }
         .toolbar { toolbarContent }
+        // On macOS 26 the content extends under a transparent toolbar, so the split view divider
+        // would run up behind the toolbar buttons; an opaque toolbar keeps it below the bar
+        .toolbarBackground(.visible, for: .windowToolbar)
         .searchable(text: $search, prompt: "Search SSID / BSSID / vendor")
         .onAppear {
             location.request()
