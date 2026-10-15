@@ -40,6 +40,9 @@ elif [[ "$SIGN_IDENTITY" != "-" ]]; then
   exit 1
 fi
 
+# A browser-downloaded profile carries com.apple.quarantine, which App Store Connect rejects (ITMS-91109);
+# strip every extended attribute before signing so the signature covers the clean files
+xattr -cr "$APP"
 codesign --force --sign "$SIGN_IDENTITY" --entitlements "$ENTITLEMENTS" "$APP"
 codesign --verify --strict "$APP"
 codesign -d --entitlements - "$APP" 2>/dev/null | grep -q app-sandbox
