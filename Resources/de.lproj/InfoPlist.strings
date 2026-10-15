@@ -1,0 +1,2 @@
+"NSLocationUsageDescription" = "macOS verlangt den Standortzugriff, bevor Apps die Namen (SSID) und BSSIDs von WLAN-Netzwerken in der Nähe lesen können. WiFi-Viewer speichert oder überträgt deinen Standort niemals.";
+"NSLocationWhenInUseUsageDescription" = "macOS verlangt den Standortzugriff, bevor Apps die Namen (SSID) und BSSIDs von WLAN-Netzwerken in der Nähe lesen können. WiFi-Viewer speichert oder überträgt deinen Standort niemals.";

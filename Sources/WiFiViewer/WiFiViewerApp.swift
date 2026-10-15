@@ -43,7 +43,9 @@ struct WiFiViewerApp: App {
                 Divider()
                 #endif
                 Picker("Language", selection: $language) {
-                    ForEach(AppLanguage.allCases) { Text($0.title).tag($0) }
+                    Text(AppLanguage.system.title).tag(AppLanguage.system)
+                    Divider()
+                    ForEach(AppLanguage.allCases.filter { $0 != .system }) { Text($0.title).tag($0) }
                 }
                 .onChange(of: language) { AppLanguage.select($0) }
             }

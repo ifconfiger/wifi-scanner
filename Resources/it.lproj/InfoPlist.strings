@@ -1,0 +1,2 @@
+"NSLocationUsageDescription" = "macOS richiede l’autorizzazione alla posizione perché le app possano leggere i nomi (SSID) e i BSSID delle reti Wi-Fi vicine. WiFi-Viewer non registra né carica mai la tua posizione.";
+"NSLocationWhenInUseUsageDescription" = "macOS richiede l’autorizzazione alla posizione perché le app possano leggere i nomi (SSID) e i BSSID delle reti Wi-Fi vicine. WiFi-Viewer non registra né carica mai la tua posizione.";

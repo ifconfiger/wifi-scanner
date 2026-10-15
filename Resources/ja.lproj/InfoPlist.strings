@@ -1,0 +1,2 @@
+"NSLocationUsageDescription" = "macOS では、周辺の Wi-Fi ネットワークの名前 (SSID) と BSSID を読み取るために位置情報の許可が必要です。WiFi-Viewer があなたの位置情報を記録したりアップロードしたりすることはありません。";
+"NSLocationWhenInUseUsageDescription" = "macOS では、周辺の Wi-Fi ネットワークの名前 (SSID) と BSSID を読み取るために位置情報の許可が必要です。WiFi-Viewer があなたの位置情報を記録したりアップロードしたりすることはありません。";

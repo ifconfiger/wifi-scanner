@@ -45,7 +45,7 @@
 - logo 按品牌域名抓 favicon（DuckDuckGo → Google → 官网 `/favicon.ico`），缓存在 `~/Library/Caches/WiFi-Viewer/logos/`；只发送品牌域名，不上传 BSSID。拿不到图时显示彩色首字母。
 
 ### 语言
-界面支持英文（默认）和简体中文。在菜单 **WiFi-Viewer → Language / 语言** 中切换（English / 简体中文 / 跟随系统），切换后按提示重启生效。
+界面支持英文、简体中文、繁体中文、日语、韩语、德语、法语、西班牙语、葡萄牙语（巴西）、意大利语和俄语。默认跟随系统语言（不支持的语言回退到英文）；可在菜单 **WiFi-Viewer → 语言** 中手动切换，切换后按提示重启生效。
 
 ### 检查更新
 WiFi-Viewer 支持自动升级。启动时检查 GitHub Releases（每天最多一次），有新版本时点「安装并重启」即可：后台下载（状态栏显示进度），校验是同一应用、同一 Developer ID 团队签名后原地替换当前版本并重启，定位权限和设置都会保留。若应用所在位置不可写，会在访达中显示新版本，手动移动即可。也可以通过 **WiFi-Viewer → 检查更新…** 手动检查，或在同一菜单关闭「自动检查更新」。
@@ -62,11 +62,11 @@ open build/WiFi-Viewer.app
 开发调试可以 `open Package.swift` 用 Xcode 打开；但定位授权、图标和翻译只有用 build.sh 打出的 .app 运行才生效。
 
 ### 本地化
-界面文字以英文原文作为 key（`Text("Scan")`、`String(localized: "…")`），中文翻译在 `Resources/zh-Hans.lproj/Localizable.strings`；`Resources/en.lproj` 存放英文复数规则和定位弹窗用的 `InfoPlist.strings`。修改界面文字后运行：
+界面文字以英文原文作为 key（`Text("Scan")`、`String(localized: "…")`），各语言翻译在 `Resources/<lang>.lproj/Localizable.strings`（复数形式在 `Localizable.stringsdict`）；`Resources/en.lproj` 存放英文复数规则和定位弹窗用的 `InfoPlist.strings`。修改界面文字后运行：
 ```bash
 uv run tools/check_l10n.py
 ```
-它会带 `-emit-localized-strings` 编译一遍，列出缺少中文翻译的 key。
+它会带 `-emit-localized-strings` 编译一遍，按语言列出缺少翻译的 key。新增语言时：建立对应 `.lproj`（含 `InfoPlist.strings`），并加入 `Resources/Info.plist` 的 `CFBundleLocalizations` 和 `Language.swift` 的 `AppLanguage`。
 
 ### 图标
 `Resources/AppIcon.icns` 由 `tools/make_icon.py` 生成（三条频谱曲线 = 2.4/5/6 GHz，配色与 App 内一致）。改设计后重新生成：

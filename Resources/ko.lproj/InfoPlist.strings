@@ -1,0 +1,2 @@
+"NSLocationUsageDescription" = "macOS에서는 주변 Wi-Fi 네트워크의 이름(SSID)과 BSSID를 읽으려면 위치 권한이 필요합니다. WiFi-Viewer는 사용자의 위치를 기록하거나 업로드하지 않습니다.";
+"NSLocationWhenInUseUsageDescription" = "macOS에서는 주변 Wi-Fi 네트워크의 이름(SSID)과 BSSID를 읽으려면 위치 권한이 필요합니다. WiFi-Viewer는 사용자의 위치를 기록하거나 업로드하지 않습니다.";

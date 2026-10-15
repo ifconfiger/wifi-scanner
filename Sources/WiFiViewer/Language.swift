@@ -1,28 +1,46 @@
 import AppKit
 import Foundation
 
-/// In-app language choice. English is the default regardless of the system language;
-/// the choice is applied through the app's own `AppleLanguages` default and takes effect after a restart.
+/// In-app language choice. Follows the system language by default (falling back to English);
+/// an explicit choice is applied through the app's own `AppleLanguages` default and takes effect after a restart.
 enum AppLanguage: String, CaseIterable, Identifiable {
-    case english = "en"
-    case chinese = "zh-Hans"
     case system
+    case english = "en"
+    case chineseSimplified = "zh-Hans"
+    case chineseTraditional = "zh-Hant"
+    case japanese = "ja"
+    case korean = "ko"
+    case german = "de"
+    case french = "fr"
+    case spanish = "es"
+    case portuguese = "pt-BR"
+    case italian = "it"
+    case russian = "ru"
 
     var id: String { rawValue }
 
     /// Shown in each language's own script so it is recognizable from either UI
     var title: String {
         switch self {
-        case .english: return "English"
-        case .chinese: return "简体中文"
         case .system: return String(localized: "Follow System")
+        case .english: return "English"
+        case .chineseSimplified: return "简体中文"
+        case .chineseTraditional: return "繁體中文"
+        case .japanese: return "日本語"
+        case .korean: return "한국어"
+        case .german: return "Deutsch"
+        case .french: return "Français"
+        case .spanish: return "Español"
+        case .portuguese: return "Português (Brasil)"
+        case .italian: return "Italiano"
+        case .russian: return "Русский"
         }
     }
 
     private static let key = "appLanguage"
 
     static var current: AppLanguage {
-        UserDefaults.standard.string(forKey: key).flatMap(AppLanguage.init) ?? .english
+        UserDefaults.standard.string(forKey: key).flatMap(AppLanguage.init) ?? .system
     }
 
     /// Must run before any localized string is looked up (called from the App initializer)

@@ -1,0 +1,2 @@
+"NSLocationUsageDescription" = "macOS 要求取得定位權限後才能讀取附近 Wi-Fi 的名稱 (SSID) 和 BSSID。WiFi-Viewer 不會記錄或上傳你的位置。";
+"NSLocationWhenInUseUsageDescription" = "macOS 要求取得定位權限後才能讀取附近 Wi-Fi 的名稱 (SSID) 和 BSSID。WiFi-Viewer 不會記錄或上傳你的位置。";

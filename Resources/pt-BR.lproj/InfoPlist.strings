@@ -1,0 +1,2 @@
+"NSLocationUsageDescription" = "O macOS exige permissão de localização para que os apps possam ler os nomes (SSID) e os BSSIDs das redes Wi-Fi próximas. O WiFi-Viewer nunca registra nem envia a sua localização.";
+"NSLocationWhenInUseUsageDescription" = "O macOS exige permissão de localização para que os apps possam ler os nomes (SSID) e os BSSIDs das redes Wi-Fi próximas. O WiFi-Viewer nunca registra nem envia a sua localização.";
