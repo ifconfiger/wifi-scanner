@@ -1,7 +1,7 @@
 # /// script
 # dependencies = ["pillow>=10", "numpy"]
 # ///
-"""Generate the WiFi-Scanner icon: dark rounded tile + channel spectrum curves for three bands.
+"""Generate the WiFi-Viewer icon: dark rounded tile + channel spectrum curves for three bands.
 Usage: uv run tools/make_icon.py  →  Resources/AppIcon.icns + Resources/AppIcon.png"""
 from pathlib import Path
 

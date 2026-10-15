@@ -1,3 +1,5 @@
+// The App Store build (-DAPPSTORE) leaves out self-updating; the store delivers updates there
+#if !APPSTORE
 import AppKit
 import Foundation
 import Security
@@ -8,7 +10,7 @@ import SwiftUI
 final class UpdateChecker: ObservableObject {
     static let shared = UpdateChecker()
 
-    static let repo = "ifconfiger/wifi-scanner"
+    static let repo = "ifconfiger/wifi-viewer"
     private static let autoCheckKey = "autoCheckForUpdates"
     private static let lastCheckKey = "lastUpdateCheck"
 
@@ -32,7 +34,7 @@ final class UpdateChecker: ObservableObject {
     /// Silent check at launch, at most once a day; only speaks up when an update exists
     func checkOnLaunch() {
         #if DEBUG
-        // `open WiFi-Scanner.app --args --debug-install-latest` installs the latest release without prompting
+        // `open WiFi-Viewer.app --args --debug-install-latest` installs the latest release without prompting
         if CommandLine.arguments.contains("--debug-install-latest") {
             Task { if let r = try? await Self.fetchLatest() { await install(r) } }
             return
@@ -56,7 +58,7 @@ final class UpdateChecker: ObservableObject {
                 showUpdateAlert(release, current: current)
             } else if userInitiated {
                 alert(String(localized: "You're up to date"),
-                      String(localized: "WiFi-Scanner \(current) is the latest version."))
+                      String(localized: "WiFi-Viewer \(current) is the latest version."))
             }
         } catch {
             if userInitiated {
@@ -100,7 +102,7 @@ final class UpdateChecker: ObservableObject {
         var req = URLRequest(url: URL(string: "https://api.github.com/repos/\(repo)/releases/latest")!,
                              timeoutInterval: 15)
         req.setValue("application/vnd.github+json", forHTTPHeaderField: "Accept")
-        req.setValue("WiFi-Scanner/\(currentVersion ?? "dev")", forHTTPHeaderField: "User-Agent")
+        req.setValue("WiFi-Viewer/\(currentVersion ?? "dev")", forHTTPHeaderField: "User-Agent")
         let (data, resp) = try await URLSession.shared.data(for: req)
         guard let http = resp as? HTTPURLResponse, http.statusCode == 200 else {
             let code = (resp as? HTTPURLResponse)?.statusCode ?? 0
@@ -126,7 +128,7 @@ final class UpdateChecker: ObservableObject {
 
     private func showUpdateAlert(_ release: Release, current: String) {
         let a = NSAlert()
-        a.messageText = String(localized: "WiFi-Scanner \(release.version) is available")
+        a.messageText = String(localized: "WiFi-Viewer \(release.version) is available")
         a.informativeText = String(localized: "You have version \(current).")
         a.addButton(withTitle: String(localized: "Install and Relaunch"))
         a.addButton(withTitle: String(localized: "View Release"))
@@ -161,7 +163,7 @@ final class UpdateChecker: ObservableObject {
             case .invalidBundle: return String(localized: "The downloaded app doesn't match this app's identity or version.")
             case .signature: return String(localized: "The downloaded app isn't signed by the same developer, so it was not installed.")
             case .notInstallable:
-                return String(localized: "WiFi-Scanner can't replace itself in its current location. The new version is shown in Finder; move it to Applications to finish.")
+                return String(localized: "WiFi-Viewer can't replace itself in its current location. The new version is shown in Finder; move it to Applications to finish.")
             }
         }
     }
@@ -177,7 +179,7 @@ final class UpdateChecker: ObservableObject {
         do {
             guard let asset = release.zip else { throw UpdateError.noPackage }
             let work = FileManager.default.temporaryDirectory
-                .appendingPathComponent("WiFi-Scanner-update-\(UUID().uuidString)", isDirectory: true)
+                .appendingPathComponent("WiFi-Viewer-update-\(UUID().uuidString)", isDirectory: true)
             try FileManager.default.createDirectory(at: work, withIntermediateDirectories: true)
 
             status = String(localized: "Downloading update \(release.version)…")
@@ -287,3 +289,4 @@ final class UpdateChecker: ObservableObject {
         NSApp.terminate(nil)
     }
 }
+#endif

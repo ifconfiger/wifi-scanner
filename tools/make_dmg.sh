@@ -1,21 +1,21 @@
 #!/usr/bin/env bash
-# Package build/WiFi-Scanner.app into a drag-to-install disk image.
-# Usage: tools/make_dmg.sh [output.dmg]   (default: build/WiFi-Scanner.dmg)
+# Package build/WiFi-Viewer.app into a drag-to-install disk image.
+# Usage: tools/make_dmg.sh [output.dmg]   (default: build/WiFi-Viewer.dmg)
 # When SIGN_IDENTITY names a Developer ID certificate the image itself is signed too, as notarization expects.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
-APP=build/WiFi-Scanner.app
-OUT="${1:-build/WiFi-Scanner.dmg}"
+APP=build/WiFi-Viewer.app
+OUT="${1:-build/WiFi-Viewer.dmg}"
 [[ -d "$APP" ]] || { echo "$APP not found; run ./build.sh first" >&2; exit 1; }
 
 STAGE="$(mktemp -d)"
 trap 'rm -rf "$STAGE"' EXIT
-ditto "$APP" "$STAGE/WiFi-Scanner.app"
+ditto "$APP" "$STAGE/WiFi-Viewer.app"
 ln -s /Applications "$STAGE/Applications"
 
 rm -f "$OUT"
-hdiutil create -volname WiFi-Scanner -srcfolder "$STAGE" -fs HFS+ \
+hdiutil create -volname WiFi-Viewer -srcfolder "$STAGE" -fs HFS+ \
   -format UDZO -imagekey zlib-level=9 "$OUT" >/dev/null
 
 if [[ -n "${SIGN_IDENTITY:-}" && "$SIGN_IDENTITY" != "-" ]]; then

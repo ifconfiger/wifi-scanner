@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Build and package WiFi-Scanner.app (location authorization requires running as an .app bundle)
+# Build and package WiFi-Viewer.app (location authorization requires running as an .app bundle)
 set -euo pipefail
 cd "$(dirname "$0")"
 
@@ -11,12 +11,14 @@ fi
 
 # CONFIG=debug builds a debug binary (used to test the updater locally)
 CONFIG="${CONFIG:-release}"
-swift build -c "$CONFIG"
+# SWIFT_FLAGS passes extra compiler flags, e.g. tools/build_mas.sh sets "-Xswiftc -DAPPSTORE"
+read -r -a SWIFT_FLAGS <<< "${SWIFT_FLAGS:-}"
+swift build -c "$CONFIG" ${SWIFT_FLAGS[@]+"${SWIFT_FLAGS[@]}"}
 
-APP=build/WiFi-Scanner.app
+APP=build/WiFi-Viewer.app
 rm -rf "$APP"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
-cp "$(swift build -c "$CONFIG" --show-bin-path)/WiFiScanner" "$APP/Contents/MacOS/"
+cp "$(swift build -c "$CONFIG" ${SWIFT_FLAGS[@]+"${SWIFT_FLAGS[@]}"} --show-bin-path)/WiFiViewer" "$APP/Contents/MacOS/"
 cp Resources/Info.plist "$APP/Contents/"
 cp Resources/AppIcon.icns Resources/oui.tsv "$APP/Contents/Resources/"
 cp -R Resources/*.lproj "$APP/Contents/Resources/"
@@ -31,10 +33,10 @@ fi
 # certificate, enable the Hardened Runtime and a secure timestamp as notarization requires
 SIGN_IDENTITY="${SIGN_IDENTITY:--}"
 if [[ "$SIGN_IDENTITY" == "-" ]]; then
-  codesign --force --sign - --entitlements Resources/WiFi-Scanner.entitlements "$APP"
+  codesign --force --sign - --entitlements Resources/WiFi-Viewer.entitlements "$APP"
 else
   codesign --force --options runtime --timestamp \
-    --entitlements Resources/WiFi-Scanner.entitlements \
+    --entitlements Resources/WiFi-Viewer.entitlements \
     --sign "$SIGN_IDENTITY" "$APP"
 fi
 codesign --verify --strict "$APP"

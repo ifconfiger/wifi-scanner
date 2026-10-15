@@ -136,7 +136,7 @@
 "Busy; latency rises" = "繁忙，延迟上升";
 "Congested; consider changing channel" = "拥塞，考虑换信道";
 "Follow System" = "跟随系统";
-"Restart WiFi-Scanner to change the language?" = "重启 WiFi-Scanner 以切换语言？";
+"Restart WiFi-Viewer to change the language?" = "重启 WiFi-Viewer 以切换语言？";
 "The new language will be used after the app restarts." = "应用重启后将使用新的语言。";
 "Restart Now" = "立即重启";
 "Later" = "稍后";
@@ -157,10 +157,10 @@
 "Check for Updates…" = "检查更新…";
 "Automatically Check for Updates" = "自动检查更新";
 "You're up to date" = "已是最新版本";
-"WiFi-Scanner %@ is the latest version." = "WiFi-Scanner %@ 已是最新版本。";
+"WiFi-Viewer %@ is the latest version." = "WiFi-Viewer %@ 已是最新版本。";
 "Couldn't check for updates" = "无法检查更新";
 "GitHub returned HTTP %lld." = "GitHub 返回 HTTP %lld。";
-"WiFi-Scanner %@ is available" = "WiFi-Scanner %@ 已发布";
+"WiFi-Viewer %@ is available" = "WiFi-Viewer %@ 已发布";
 "You have version %@." = "当前版本为 %@。";
 "View Release" = "查看发布页";
 "Install and Relaunch" = "安装并重启";
@@ -173,7 +173,7 @@
 "The downloaded package couldn't be unpacked." = "下载的安装包无法解压。";
 "The downloaded app doesn't match this app's identity or version." = "下载的应用与本应用的标识或版本不符。";
 "The downloaded app isn't signed by the same developer, so it was not installed." = "下载的应用不是由同一开发者签名，已取消安装。";
-"WiFi-Scanner can't replace itself in its current location. The new version is shown in Finder; move it to Applications to finish." = "WiFi-Scanner 无法在当前位置替换自身。新版本已在访达中显示，请将其移到「应用程序」以完成更新。";
+"WiFi-Viewer can't replace itself in its current location. The new version is shown in Finder; move it to Applications to finish." = "WiFi-Viewer 无法在当前位置替换自身。新版本已在访达中显示，请将其移到「应用程序」以完成更新。";
 "OUI %@ (virtual BSSID, guessed)" = "OUI %@（虚拟 BSSID，推测）";
 "Wi-Fi is off. Turn on Wi-Fi first." = "Wi-Fi 已关闭，请先打开 Wi-Fi";
 "No Wi-Fi interface found" = "未找到 Wi-Fi 接口";

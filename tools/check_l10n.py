@@ -20,7 +20,7 @@ ROOT = pathlib.Path(__file__).resolve().parent.parent
 ZH = ROOT / "Resources" / "zh-Hans.lproj" / "Localizable.strings"
 
 # Keys that read the same in both languages (units, identifiers, symbols)
-SAME = {"", "—", "dBm", "SSID", "BSSID", "WiFi-Scanner", "%lld", "%lld dBm", "%lld dB", "%lld MHz", "ch%lld · %lld dBm"}
+SAME = {"", "—", "dBm", "SSID", "BSSID", "WiFi-Viewer", "%lld", "%lld dBm", "%lld dB", "%lld MHz", "ch%lld · %lld dBm"}
 
 
 def main() -> int:

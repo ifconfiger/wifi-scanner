@@ -1,8 +1,10 @@
 import SwiftUI
 
 @main
-struct WiFiScannerApp: App {
+struct WiFiViewerApp: App {
+    #if !APPSTORE
     @StateObject private var updater = UpdateChecker.shared
+    #endif
     @State private var language = AppLanguage.current
 
     init() {
@@ -22,20 +24,24 @@ struct WiFiScannerApp: App {
     }
 
     var body: some Scene {
-        WindowGroup("WiFi-Scanner") {
+        WindowGroup("WiFi-Viewer") {
             ContentView()
                 .frame(minWidth: 1200, minHeight: 760)
+                #if !APPSTORE
                 .onAppear { updater.checkOnLaunch() }
+                #endif
         }
         .windowToolbarStyle(.unified)
         .commands {
             CommandGroup(after: .appInfo) {
+                #if !APPSTORE
                 Button("Check for Updates…") {
                     Task { await updater.check(userInitiated: true) }
                 }
                 .disabled(updater.isChecking || updater.isInstalling)
                 Toggle("Automatically Check for Updates", isOn: $updater.autoCheck)
                 Divider()
+                #endif
                 Picker("Language", selection: $language) {
                     ForEach(AppLanguage.allCases) { Text($0.title).tag($0) }
                 }

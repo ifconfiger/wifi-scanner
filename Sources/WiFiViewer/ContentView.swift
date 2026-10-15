@@ -4,7 +4,9 @@ import SwiftUI
 struct ContentView: View {
     @StateObject private var scanner = NetworkScanner()
     @StateObject private var location = LocationAuth()
+    #if !APPSTORE
     @ObservedObject private var updater = UpdateChecker.shared
+    #endif
 
     @State private var bandFilter: BandFilter = .all
     @State private var search = ""
@@ -172,12 +174,14 @@ struct ContentView: View {
                     Text(verbatim: "\(b.label): \(scanner.networks.filter { $0.band == b }.count)")
                 }
             }
+            #if !APPSTORE
             if let status = updater.status {
                 HStack(spacing: 4) {
                     ProgressView().controlSize(.mini)
                     Text(status)
                 }
             }
+            #endif
             if let err = scanner.lastError {
                 Text(err).foregroundStyle(.red)
             } else if let t = scanner.lastScan {

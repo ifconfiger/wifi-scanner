@@ -10,13 +10,13 @@
         <string>zh-Hans</string>
     </array>
     <key>CFBundleName</key>
-    <string>WiFi-Scanner</string>
+    <string>WiFi-Viewer</string>
     <key>CFBundleDisplayName</key>
-    <string>WiFi-Scanner</string>
+    <string>WiFi-Viewer</string>
     <key>CFBundleExecutable</key>
-    <string>WiFiScanner</string>
+    <string>WiFiViewer</string>
     <key>CFBundleIdentifier</key>
-    <string>xyz.nows.wifi-scanner</string>
+    <string>xyz.nows.wifi-viewer</string>
     <key>CFBundlePackageType</key>
     <string>APPL</string>
     <key>CFBundleShortVersionString</key>
@@ -31,11 +31,16 @@
     <string>NSApplication</string>
     <key>NSHighResolutionCapable</key>
     <true/>
+    <key>LSApplicationCategoryType</key>
+    <string>public.app-category.utilities</string>
+    <!-- Only HTTPS through system APIs; spares the export compliance question on every App Store upload -->
+    <key>ITSAppUsesNonExemptEncryption</key>
+    <false/>
     <!-- macOS 14+ requires location authorization to read SSID/BSSID; otherwise CoreWLAN returns nil.
          Localized in Resources/*.lproj/InfoPlist.strings -->
     <key>NSLocationUsageDescription</key>
-    <string>macOS requires location permission before apps can read the names (SSID) and BSSIDs of nearby Wi-Fi networks. WiFi-Scanner never records or uploads your location.</string>
+    <string>macOS requires location permission before apps can read the names (SSID) and BSSIDs of nearby Wi-Fi networks. WiFi-Viewer never records or uploads your location.</string>
     <key>NSLocationWhenInUseUsageDescription</key>
-    <string>macOS requires location permission before apps can read the names (SSID) and BSSIDs of nearby Wi-Fi networks. WiFi-Scanner never records or uploads your location.</string>
+    <string>macOS requires location permission before apps can read the names (SSID) and BSSIDs of nearby Wi-Fi networks. WiFi-Viewer never records or uploads your location.</string>
 </dict>
 </plist>

@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # Submit a file to Apple's notary service, wait for the verdict and staple the ticket.
 # Usage: tools/notarize.sh <file-to-submit> <path-to-staple>
-#   app: tools/notarize.sh notarize.zip build/WiFi-Scanner.app   (an .app must be submitted as a zip)
-#   dmg: tools/notarize.sh build/WiFi-Scanner.dmg build/WiFi-Scanner.dmg
+#   app: tools/notarize.sh notarize.zip build/WiFi-Viewer.app   (an .app must be submitted as a zip)
+#   dmg: tools/notarize.sh build/WiFi-Viewer.dmg build/WiFi-Viewer.dmg
 # Credentials (App Store Connect API key): APPLE_NOTARY_KEY (.p8 contents or its base64),
 # APPLE_NOTARY_KEY_ID, APPLE_NOTARY_ISSUER.
 set -euo pipefail

@@ -44,7 +44,7 @@ enum AppLanguage: String, CaseIterable, Identifiable {
         UserDefaults.standard.set(lang.rawValue, forKey: key)
         apply(lang)
         let a = NSAlert()
-        a.messageText = String(localized: "Restart WiFi-Scanner to change the language?")
+        a.messageText = String(localized: "Restart WiFi-Viewer to change the language?")
         a.informativeText = String(localized: "The new language will be used after the app restarts.")
         a.addButton(withTitle: String(localized: "Restart Now"))
         a.addButton(withTitle: String(localized: "Later"))

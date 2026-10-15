@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <!-- Mac App Store build (tools/build_mas.sh). The store requires the App Sandbox -->
+    <key>com.apple.security.app-sandbox</key>
+    <true/>
+    <!-- Required to read SSID/BSSID through CoreWLAN -->
+    <key>com.apple.security.personal-information.location</key>
+    <true/>
+    <!-- Outgoing HTTPS for brand favicons -->
+    <key>com.apple.security.network.client</key>
+    <true/>
+</dict>
+</plist>

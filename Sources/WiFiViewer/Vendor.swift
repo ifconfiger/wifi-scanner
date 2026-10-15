@@ -212,7 +212,7 @@ final class LogoStore {
 
     private nonisolated static let cacheDir: URL = {
         let base = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)[0]
-        let dir = base.appendingPathComponent("WiFi-Scanner/logos", isDirectory: true)
+        let dir = base.appendingPathComponent("WiFi-Viewer/logos", isDirectory: true)
         try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
         return dir
     }()
