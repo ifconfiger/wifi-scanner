@@ -123,6 +123,25 @@ struct DetailPanel: View {
         }
     }
 
+    @ViewBuilder
+    private func badges(_ n: WiFiNetwork) -> some View {
+        if !n.bssid.isEmpty, n.vendor != nil {
+            VendorLogo(vendor: n.vendor, size: 18)
+        }
+        BandBadge(band: n.band).fixedSize()
+        Text("Channel \(n.channel)").font(.caption).foregroundStyle(.secondary).fixedSize()
+    }
+
+    @ViewBuilder
+    private func connectedLabel(_ n: WiFiNetwork) -> some View {
+        if n.isCurrent {
+            Label("Connected", systemImage: "checkmark.circle.fill")
+                .font(.caption)
+                .foregroundStyle(.green)
+                .fixedSize()
+        }
+    }
+
     private func header(_ n: WiFiNetwork) -> some View {
         HStack(alignment: .top, spacing: 12) {
             VStack(alignment: .leading, spacing: 6) {
@@ -130,16 +149,15 @@ struct DetailPanel: View {
                     .font(.title2.bold())
                     .lineLimit(2)
                     .textSelection(.enabled)
-                HStack(spacing: 6) {
-                    if !n.bssid.isEmpty, n.vendor != nil {
-                        VendorLogo(vendor: n.vendor, size: 18)
+                // A narrow inspector can't fit "Connected" beside the badges, so it drops to its own line
+                ViewThatFits(in: .horizontal) {
+                    HStack(spacing: 6) {
+                        badges(n)
+                        connectedLabel(n)
                     }
-                    BandBadge(band: n.band)
-                    Text("Channel \(n.channel)").font(.caption).foregroundStyle(.secondary)
-                    if n.isCurrent {
-                        Label("Connected", systemImage: "checkmark.circle.fill")
-                            .font(.caption)
-                            .foregroundStyle(.green)
+                    VStack(alignment: .leading, spacing: 6) {
+                        HStack(spacing: 6) { badges(n) }
+                        connectedLabel(n)
                     }
                 }
                 if !n.bssid.isEmpty {
@@ -171,6 +189,8 @@ struct DetailPanel: View {
                         Text(rows[i].1)
                             .textSelection(.enabled)
                             .fixedSize(horizontal: false, vertical: true)
+                            // Without a full-width frame Grid under-measures wrapped values and the rows spill over the box title
+                            .frame(maxWidth: .infinity, alignment: .leading)
                     }
                 }
             }

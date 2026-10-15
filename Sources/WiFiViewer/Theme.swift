@@ -43,10 +43,12 @@ struct SignalCell: View {
 
     var body: some View {
         HStack(spacing: 6) {
-            Gauge(value: signalFraction(rssi)) { EmptyView() }
-                .gaugeStyle(.accessoryLinearCapacity)
-                .tint(signalColor(rssi))
-                .frame(width: 40)
+            // Drawn by hand: Gauge's tint turns gray in inactive windows and accent-blue in dark mode
+            ZStack(alignment: .leading) {
+                Capsule().fill(Color.secondary.opacity(0.25))
+                Capsule().fill(signalColor(rssi)).frame(width: 40 * signalFraction(rssi))
+            }
+            .frame(width: 40, height: 5)
             Text("\(rssi) dBm").monospacedDigit()
         }
     }
