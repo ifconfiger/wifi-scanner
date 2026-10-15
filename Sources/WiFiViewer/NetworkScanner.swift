@@ -116,7 +116,11 @@ final class NetworkScanner: ObservableObject {
                 out.append(n)
             }
         }
+        #if DEMO
+        return DemoMode.anonymize(out)
+        #else
         return out
+        #endif
     }
 
     /// Only append networks not yet listed; leave existing rows alone so stale cached signal values don't roll numbers back
@@ -151,7 +155,11 @@ final class NetworkScanner: ObservableObject {
             currentLink = String(localized: "\(name): not connected")
             return
         }
+        #if DEMO
+        let ssid = DemoMode.ssid(iface.ssid() ?? "")
+        #else
         let ssid = iface.ssid() ?? String(localized: "(no permission to read SSID)")
+        #endif
         currentLink = String(localized: "\(name): \(ssid) · Channel \(ch.channelNumber) · \(iface.rssiValue()) dBm · \(Int(iface.transmitRate())) Mbps")
     }
 

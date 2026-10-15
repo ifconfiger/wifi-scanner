@@ -31,7 +31,11 @@ struct ChartsPanel: View {
     let history: [String: [SignalSample]]
     let bandFilter: BandFilter
     @Binding var selection: Set<String>
+    #if DEMO
+    @State private var mode: ChartMode = DemoMode.chart
+    #else
     @State private var mode: ChartMode = .spectrum
+    #endif
 
     private var bands: [Band] {
         if let b = bandFilter.band { return [b] }

@@ -36,6 +36,9 @@ struct ContentView: View {
         .onAppear {
             location.request()
             scanner.start()
+            #if DEMO
+            DemoMode.sizeWindow()
+            #endif
         }
         .onChange(of: location.isAuthorized) { granted in
             if granted { scanner.scan() }
@@ -45,6 +48,9 @@ struct ContentView: View {
             let ids = Set(list.map(\.id))
             let kept = selection.filter { ids.contains($0) }
             if kept.count != selection.count { selection = kept }
+            #if DEMO
+            if let picked = DemoMode.pick(from: list), selection.count < picked.count { selection = picked }
+            #endif
         }
     }
 
